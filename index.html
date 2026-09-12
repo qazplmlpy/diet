@@ -354,7 +354,7 @@ function weightEditor(id){
   $('#ok',s.el).onclick=()=>{const kg=num(s.q('#w_kg').value);if(kg<=0){s.q('#w_kg').focus();toast('填一下体重');return}const o={id:ed?ed.id:uid('w'),date:s.q('#w_dt').value||TODAY(),kg:kg,note:s.q('#w_nt').value.trim()};if(ed)DB.weights[DB.weights.findIndex(x=>x.id===ed.id)]=o;else DB.weights.push(o);LS.s('weights',DB.weights);s.close();renderWeight();toast('已记录')};
   const dl=$('#del',s.el);if(dl)dl.onclick=()=>{DB.weights=DB.weights.filter(x=>x.id!==ed.id);LS.s('weights',DB.weights);s.close();renderWeight();toast('已删除')};
 }
-
+li
 function sugTgt(){
   const p=DB.profile,ws=DB.weights.slice().sort((a,b)=>a.date<b.date?-1:1);
   const kg=ws.length?num(ws[ws.length-1].kg):55;
