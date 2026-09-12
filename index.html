@@ -1,941 +1,417 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="饮食">
 <meta name="theme-color" content="#F2F1F5">
 <title>饮食记录</title>
 <style>
-:root{
-  --bg:#F2F1F5;--card:#FFFFFF;--label:#30325E;--sec:#8A8A99;--ter:#B3B3BE;
-  --sep:#E7E6EC;--blue:#5D6BA8;--green:#8FB0A6;--orange:#E9A6B6;
-  --red:#C5637A;--purple:#A8A5B5;--r:16px;--ease:cubic-bezier(.32,.72,0,1);
-}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%}
-body{font:16px/1.42 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
-  background:var(--bg);color:var(--label);overflow:hidden;-webkit-font-smoothing:antialiased}
-input,button,textarea{font-family:inherit;font-size:inherit;color:inherit}
-input{-webkit-appearance:none;appearance:none;border:none;background:none;outline:none;border-radius:0}
-button{border:none;background:none;cursor:pointer;color:inherit}
-.pages{position:fixed;inset:0;overflow:hidden;background:var(--bg)}
-.page{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
-  background:var(--bg);transform:translateX(100%);will-change:transform;z-index:1}
-.page.active{transform:translateX(0);z-index:2}
-.tabbar{position:fixed;left:0;right:0;bottom:0;display:flex;
-  height:calc(52px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
-  background:rgba(251,250,252,.94);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
-  border-top:.5px solid rgba(48,50,94,.10);z-index:100}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  color:var(--sec);padding-top:5px;transition:color .18s ease}
-.tab.on{color:var(--blue)}
-.tab svg{width:24px;height:24px;transition:transform .24s var(--ease)}
-.tab.on svg{transform:scale(1.07)}
-.tab span{font-size:10px;font-weight:500}
-.h1{font-size:31px;font-weight:700;letter-spacing:-.5px;line-height:1.15;margin-bottom:16px}
-.h1 small{display:block;font-size:13px;font-weight:400;color:var(--sec);letter-spacing:0;margin-top:4px}
-.h2{font-size:13px;color:var(--sec);font-weight:500;margin:20px 4px 8px}
-.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:14px;
-  box-shadow:0 1px 3px rgba(48,50,94,.05)}
-.card.pl{padding:0;overflow:hidden}
-.row{display:flex;align-items:center;gap:10px;padding:13px 16px;min-height:50px;
-  border-bottom:.5px solid var(--sep)}
-.row:last-child{border-bottom:none}
-.row .g{flex:1;min-width:0}
-.row .t{font-size:17px;letter-spacing:-.2px}
-.row .s{font-size:13px;color:var(--sec);margin-top:3px;line-height:1.35}
-.row .v{font-size:16px;color:var(--sec);white-space:nowrap;flex:0 0 auto}
-.row.ck{cursor:pointer;transition:background .16s ease}
-.row.ck:active{background:rgba(48,50,94,.045)}
-.row .ar{font-size:19px;color:var(--ter);flex:0 0 auto;margin-top:-2px}
-.field{display:flex;align-items:center;padding:13px 16px;min-height:50px;
-  border-bottom:.5px solid var(--sep)}
-.field:last-child{border-bottom:none}
-.field>label{flex:1;font-size:17px;letter-spacing:-.2px}
-.field input{text-align:right;font-size:17px;width:130px;flex:0 0 auto}
-.field .u{font-size:17px;color:var(--sec);min-width:30px;text-align:right;margin-left:4px}
-.bar{height:8px;background:#EAE9F0;border-radius:4px;overflow:hidden}
-.bar i{display:block;height:100%;border-radius:4px;transition:width .45s var(--ease)}
-.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:50px;
-  border-radius:12px;background:var(--blue);color:#fff;font-size:17px;font-weight:600;margin-top:10px;
-  transition:transform .12s ease,opacity .12s ease}
-.btn:active{transform:scale(.974);opacity:.86}
-.btn.sec{background:#ECEBF2;color:var(--blue)}
-.btn.dg{background:#FAE7EB;color:var(--red)}
-.btn.sm{height:36px;font-size:15px;width:auto;padding:0 16px;margin:0;border-radius:10px}
-.empty{text-align:center;padding:34px 20px;color:var(--sec)}
-.empty svg{width:38px;height:38px;color:var(--ter);margin-bottom:10px}
-.empty b{display:block;font-size:15px;font-weight:600;color:var(--sec)}
-.empty p{font-size:13px;color:var(--ter);margin-top:5px;line-height:1.5}
-.sheet{position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;
-  transform:translateY(100%);transition:transform .38s var(--ease),visibility .38s;visibility:hidden}
-.sheet.on{transform:translateY(0);visibility:visible}
-.shd{display:flex;align-items:center;justify-content:space-between;
-  padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
-  background:rgba(242,241,245,.94);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
-  border-bottom:.5px solid rgba(48,50,94,.08);flex:0 0 auto}
-.shd button{font-size:17px;color:var(--blue);min-width:54px;text-align:left}
-.shd button.r{text-align:right;font-weight:600}
-.shd button:disabled{opacity:.32}
-.shd b{flex:1;text-align:center;font-size:17px;font-weight:600;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;padding:0 6px}
-.sbd{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;
-  padding-bottom:calc(48px + env(safe-area-inset-bottom))}
-.search{display:flex;align-items:center;gap:8px;background:#ECEBF2;border-radius:10px;
-  padding:0 11px;height:38px;margin:14px 16px}
-.search svg{width:17px;height:17px;color:var(--sec);flex:0 0 auto}
-.search input{flex:1;font-size:16px}
-.search .clr{color:var(--ter);font-size:17px;padding:4px}
-.big{font-size:42px;font-weight:700;letter-spacing:-1.2px;text-align:center;line-height:1.1}
-.mid{font-weight:600}
-.gray{color:var(--sec)}
-.tip{font-size:13px;color:var(--sec);line-height:1.55;margin:10px 4px 0}
-.between{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.caps{font-size:13px;font-weight:600;color:var(--sec);letter-spacing:.02em}
-.smw{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+:root{--bg:#F2F1F5;--card:#FFF;--label:#30325E;--sec:#8A8A99;--ter:#B3B3BE;--sep:#E7E6EC;--blue:#5D6BA8;--green:#8FB0A6;--orange:#E9A6B6;--red:#C5637A;--r:18px}
+body{background:var(--bg);color:var(--label);font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC",system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+button,input{font:inherit;-webkit-appearance:none;appearance:none;outline:none;border:none;background:none;color:inherit}
+.page{display:none;padding:calc(env(safe-area-inset-top) + 14px) 16px 120px}
+.page.on{display:block;animation:in .3s cubic-bezier(.22,1,.36,1)}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:900;display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:rgba(255,255,255,.74);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border-top:.5px solid var(--sep)}
+.tab{flex:1;font-size:11px;color:var(--sec);padding:5px 0 3px;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s}
+.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tab.on{color:var(--blue);font-weight:600}
+.card{background:var(--card);border-radius:var(--r);padding:16px}
+.sec{font-size:13px;font-weight:600;color:var(--sec);margin:22px 4px 10px}
+.item{background:var(--card);border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
+.ih{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.nm{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt{font-size:15px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums;flex-shrink:0}
+.sub{font-size:12.5px;color:var(--sec);margin-top:6px;line-height:1.7}
+.sub b{color:var(--label)}
+.num{font-variant-numeric:tabular-nums}
+.addbtn{margin:18px 0 0;padding:15px;text-align:center;background:var(--card);border-radius:var(--r);color:var(--blue);font-weight:600;transition:transform .18s}
+.addbtn:active{transform:scale(.98)}
+.empty{padding:30px 16px;text-align:center;font-size:13px;color:var(--sec);line-height:1.9}
+.list{border-radius:var(--r);overflow:hidden;background:var(--card)}
+.bar{height:8px;border-radius:4px;background:var(--sep);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:4px;background:var(--blue);transition:width .35s}
+.bar.s{height:5px;border-radius:3px}.bar.s>i{border-radius:3px}
+.mask{position:fixed;inset:0;z-index:999;background:rgba(48,50,94,.28);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:flex;align-items:flex-end;animation:fade .2s}
+.mask.center{align-items:center;justify-content:center}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{width:100%;max-height:90vh;overflow-y:auto;background:var(--bg);border-radius:24px 24px 0 0;animation:up .32s cubic-bezier(.22,1,.36,1);padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.sh{position:sticky;top:0;z-index:2;background:var(--bg);display:flex;justify-content:space-between;align-items:center;padding:16px 18px 10px;font-size:16px}
+.sh .t{font-weight:600}.sh .s{color:var(--blue);font-weight:600}.sh [data-close]{color:var(--sec)}
+.sb{padding:6px 16px 10px}
+.dlg{background:var(--bg);border-radius:20px;padding:20px;width:82%;max-width:330px}
+.dlg h3{margin:0 0 16px;font-size:16px}
+.dbtns{display:flex;gap:10px;margin-top:18px}
+.dbtns button{flex:1;border-radius:12px;padding:13px;background:var(--card);color:var(--sec)}
+.dbtns button.p{background:var(--blue);color:#fff;font-weight:600}
+.f{margin-bottom:14px;flex:1;min-width:0}
+.f label{display:block;font-size:12px;color:var(--sec);margin:0 0 6px 4px}
+.f input{width:100%;background:var(--card);border-radius:12px;padding:12px 14px;font-size:16px;font-variant-numeric:tabular-nums}
+.f input::placeholder{color:var(--ter)}
+.row{display:flex;gap:10px}
+.seg{display:flex;background:var(--card);border-radius:12px;padding:3px}
+.seg button{flex:1;padding:9px;border-radius:10px;font-size:15px;color:var(--sec)}
+.seg button.on{background:var(--blue);color:#fff;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 13px;border-radius:20px;background:var(--card);font-size:13.5px;border:1.5px solid transparent}
+.chip.on{border-color:var(--blue);color:var(--blue);font-weight:600}
+.danger{margin-top:22px;padding:14px;text-align:center;color:var(--red);background:var(--card);border-radius:14px;font-weight:600}
+.dbar{position:relative;display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:var(--r);padding:10px 12px;margin-bottom:10px}
+.dbar button{font-size:20px;color:var(--blue);width:44px;height:36px}
+.dbar button:disabled{color:var(--ter)}
+.dbar .d{position:relative;flex:1;text-align:center;font-size:16px;font-weight:600;padding:4px 0}
+.dbar .d small{display:block;font-size:11px;color:var(--sec);font-weight:400;margin-top:2px}
+.dbar .d input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.big{font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.goal{font-size:14px;color:var(--sec)}
+.mac{display:flex;gap:12px;margin-top:16px}
+.mac>div{flex:1;min-width:0}
+.mac .t{font-size:11px;color:var(--sec)}
+.mac .v{font-size:14px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.mac .v em{font-style:normal;font-size:11px;color:var(--sec);font-weight:400}
+.swipe{position:relative;overflow:hidden;border-bottom:1px solid var(--sep)}
+.list .swipe:last-child{border-bottom:none}
+.swipe .db{position:absolute;right:0;top:0;bottom:0;width:80px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+.srow{position:relative;background:var(--card);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:transform .22s cubic-bezier(.22,1,.36,1);touch-action:pan-y}
+.srow .l{min-width:0;flex:1}
+.srow .l .n{font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .l .s{font-size:12px;color:var(--sec);margin-top:3px;font-variant-numeric:tabular-nums}
+.srow .r{text-align:right;flex-shrink:0}
+.srow .r .k{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.srow .r .g{font-size:11px;color:var(--sec)}
+.sum{display:flex;gap:12px;margin-bottom:10px}
+.sum>div{flex:1;background:var(--card);border-radius:var(--r);padding:16px}
+.sum .k{font-size:12px;color:var(--sec)}
+.sum .v{font-size:22px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
-<div class="pages" id="pages">
-  <section class="page active" data-p="today"></section>
-  <section class="page" data-p="foods"></section>
-  <section class="page" data-p="cost"></section>
-  <section class="page" data-p="weight"></section>
-  <section class="page" data-p="set"></section>
-</div>
-<nav class="tabbar" id="tabbar"></nav>
+
+<section class="page on" id="pg-meal"><div id="mealApp"></div></section>
+<section class="page" id="pg-food"><div id="foodApp"></div></section>
+<section class="page" id="pg-cost"><div id="costApp"></div></section>
+<section class="page" id="pg-weight"><div id="weightApp"></div></section>
+<section class="page" id="pg-set"><div id="setApp"></div></section>
+
+<nav class="tabbar">
+  <button class="tab on" data-pg="meal">
+    <svg viewBox="0 0 24 24"><path d="M3 11h18a9 9 0 0 1-18 0Z"/><path d="M9 7.2 12 11l3-3.8"/></svg>今日</button>
+  <button class="tab" data-pg="food">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="7.5" height="7" rx="2"/><rect x="13.5" y="4.5" width="7.5" height="7" rx="2"/><rect x="3" y="12.5" width="7.5" height="7" rx="2"/><rect x="13.5" y="12.5" width="7.5" height="7" rx="2"/></svg>食物库</button>
+  <button class="tab" data-pg="cost">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.8v8.4M9.4 10.3h5.2M9.4 13.2h5.2"/></svg>花费</button>
+  <button class="tab" data-pg="weight">
+    <svg viewBox="0 0 24 24"><path d="M3 17.5 8.5 11l4 3.2L15.5 8 21 16"/></svg>体重</button>
+  <button class="tab" data-pg="set">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M3.6 12h2.2M18.2 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6"/></svg>设置</button>
+</nav>
+
 <script>
-var ICON={
-  today:'<rect x="3" y="4.5" width="18" height="16.5" rx="3.5"/><path d="M3 10h18"/><path d="M8 2.5v4M16 2.5v4"/>',
-  foods:'<path d="M11.5 20.5A7.5 7.5 0 0 1 10 6.2C16 5 17.5 4.4 19.5 2c1 2 2 4.3 2 8.2 0 5.8-5 10.3-10 10.3z"/><path d="M2.5 21.5c0-3.2 2-5.7 5.4-6.3 2.5-.5 5.1-2.1 6.1-3.2"/>',
-  cost:'<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><circle cx="16" cy="14" r="1.3" fill="currentColor" stroke="none"/>',
-  weight:'<circle cx="12" cy="12" r="9"/><path d="M12 12.5l4.3-3.6"/><circle cx="12" cy="12.5" r="1.3" fill="currentColor" stroke="none"/>',
-  set:'<circle cx="12" cy="12" r="3.2"/><path d="M19.1 14.9a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
-  plus:'<path d="M12 5v14M5 12h14"/>',
-  chev:'<path d="M9 5l7 7-7 7"/>',
-  search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
-  wallet:'<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/>',
-  bowl:'<path d="M3 11h18a9 9 0 0 1-9 9 9 9 0 0 1-9-9z"/><path d="M12 8V3"/>'
-};
-function ic(n,s){return '<svg viewBox="0 0 24 24" width="'+(s||24)+'" height="'+(s||24)+'" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'+(ICON[n]||'')+'</svg>';}
+const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).querySelectorAll(s)];
+const num=v=>{const n=parseFloat(v);return isFinite(n)?n:0};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=p=>(p||'x')+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const TODAY=()=>iso(new Date());
+const addDays=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return iso(d)};
+const pISO=s=>{const a=s.split('-').map(Number);return new Date(a[0],a[1]-1,a[2])};
+const WD='日一二三四五六';
+const LS={g(k,d){try{const v=JSON.parse(localStorage.getItem('diet::'+k));return v==null?d:v}catch(e){return d}},s(k,v){try{localStorage.setItem('diet::'+k,JSON.stringify(v))}catch(e){}}};
 
-var TABS=[
-  {k:'today',n:'今日',i:'today'},{k:'foods',n:'食物',i:'foods'},
-  {k:'cost',n:'花费',i:'cost'},{k:'weight',n:'体重',i:'weight'},{k:'set',n:'设置',i:'set'}
-];
-document.getElementById('tabbar').innerHTML=TABS.map(function(t,i){
-  return '<button class="tab'+(i===0?' on':'')+'" data-i="'+i+'">'+ic(t.i)+'<span>'+t.n+'</span></button>';
-}).join('');
+const DEF=[{n:'米饭(熟)',k:116,p:2.6,c:25.9,f:0.3},{n:'鸡胸肉',k:133,p:24.6,c:1,f:3},{n:'鸡蛋',k:144,p:13.3,c:2.8,f:8.8},{n:'全麦面包',k:265,p:9,c:49,f:3.2}];
+const DB={foods:LS.g('foods',null),logs:LS.g('logs',[]),cost:LS.g('cost',[]),weights:LS.g('weights',[]),target:LS.g('target',null),profile:LS.g('profile',null)};
+if(!Array.isArray(DB.foods)||!DB.foods.length){DB.foods=DEF.map(f=>Object.assign({id:uid('f'),fav:false},f));LS.s('foods',DB.foods)}
+if(!DB.target)DB.target={kcal:1400,protein:105,carb:175,fat:31};
+if(!DB.profile)DB.profile={height:160,age:25,sex:'f',act:8,minutes:0};
 
-var pageEls=[].slice.call(document.querySelectorAll('.page'));
-var cur=0,busy=false;
+function toast(m,ms){ms=ms||1500;const e=document.createElement('div');e.textContent=m;e.style.cssText='position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:2000;background:rgba(48,50,94,.92);color:#fff;font-size:14px;padding:11px 20px;border-radius:22px;max-width:80%;text-align:center;pointer-events:none';document.body.appendChild(e);setTimeout(()=>e.style.opacity=0,ms-250);setTimeout(()=>e.remove(),ms)}
+function sheet(html){const m=document.createElement('div');m.className='mask';m.innerHTML='<div class="sheet">'+html+'</div>';document.body.appendChild(m);const close=()=>m.remove();m.onclick=e=>{if(e.target===m)close()};$$('[data-close]',m).forEach(b=>b.onclick=close);return{el:m,close,q:s=>m.querySelector(s),qa:s=>$$(s,m)}}
+function dlg(html){const m=document.createElement('div');m.className='mask center';m.innerHTML='<div class="dlg">'+html+'</div>';document.body.appendChild(m);const close=()=>m.remove();m.onclick=e=>{if(e.target===m)close()};$$('[data-close]',m).forEach(b=>b.onclick=close);return{el:m,close,q:s=>m.querySelector(s)}}
+function swipe(el){let x0=0,y0=0,dx=0,op=false,lk=null;el.addEventListener('touchstart',e=>{if(window.__row&&window.__row!==el)window.__row.style.transform='';x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=0;lk=null;el.style.transition='none'},{passive:true});el.addEventListener('touchmove',e=>{const mx=e.touches[0].clientX-x0,my=e.touches[0].clientY-y0;if(lk===null)lk=Math.abs(mx)>Math.abs(my)+3?'x':'y';if(lk!=='x')return;dx=Math.max(-96,Math.min(0,op?mx-80:mx));el.style.transform='translateX('+dx+'px)'},{passive:true});el.addEventListener('touchend',()=>{el.style.transition='';op=dx<-40;el.style.transform=op?'translateX(-80px)':'';window.__row=op?el:(window.__row===el?null:window.__row)})}
+function go(pg){$$('.page').forEach(p=>p.classList.toggle('on',p.id==='pg-'+pg));$$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.pg===pg));({meal:renderMeal,food:renderFood,cost:renderCost,weight:renderWeight,set:renderSet}[pg]||function(){})();scrollTo(0,0)}
+$$('.tab').forEach(b=>b.onclick=()=>go(b.dataset.pg));
 
-function go(idx){
-  if(idx===cur||busy||idx<0||idx>=pageEls.length)return;
-  var a=pageEls[cur],b=pageEls[idx],dir=idx>cur?1:-1;
-  busy=true;
-  b.style.transition='none';b.style.transform='translateX('+(dir*100)+'%)';b.style.zIndex=3;
-  a.style.transition='none';a.style.transform='translateX(0)';a.style.zIndex=2;
-  void b.offsetWidth;
-  var E='cubic-bezier(.32,.72,0,1)';
-  b.style.transition='transform .34s '+E;
-  a.style.transition='transform .34s '+E+', opacity .34s ease';
-  b.style.transform='translateX(0)';
-  a.style.transform='translateX('+(dir*-28)+'%)';a.style.opacity='.35';
-  setTimeout(function(){
-    a.style.transition='none';a.style.transform='translateX(100%)';
-    a.style.opacity='1';a.style.zIndex=1;b.style.zIndex=2;busy=false;
-  },350);
-  cur=idx;
-  document.querySelectorAll('.tab').forEach(function(x,i){x.classList.toggle('on',i===idx);});
+/* ---------- 今日饮食 ---------- */
+let mDate=TODAY();
+const of=d=>DB.logs.filter(l=>l.date===d);
+function tot(d){const t={k:0,p:0,c:0,f:0};of(d).forEach(l=>{const r=num(l.gram)/100;t.k+=num(l.k)*r;t.p+=num(l.p)*r;t.c+=num(l.c)*r;t.f+=num(l.f)*r});return t}
+function macCell(n,v,g,c){const p=g>0?Math.min(100,v/g*100):0;return '<div><div class="t">'+n+'</div><div class="v">'+v.toFixed(1)+'<em> / '+g+'g</em></div><div class="bar s"><i style="width:'+p+'%;background:'+c+'"></i></div></div>'}
+function renderMeal(){
+  const b=$('#mealApp');if(!b)return;if(window.__row){window.__row.style.transform='';window.__row=null}
+  const t=DB.target,tt=tot(mDate),L=of(mDate),d=pISO(mDate),isT=mDate===TODAY();
+  const pc=(a,c)=>c>0?Math.min(100,a/c*100):0;
+  b.innerHTML='<div class="dbar"><button id="pv">‹</button><div class="d">'+(d.getMonth()+1)+'月'+d.getDate()+'日 周'+WD[d.getDay()]+'<small>'+(isT?'今天':'补录中')+'</small><input type="date" id="dp" value="'+mDate+'" max="'+TODAY()+'"></div><button id="nx"'+(isT?' disabled':'')+'>›</button></div>'
+  +'<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="big">'+tt.k.toFixed(0)+'<span class="goal"> / '+t.kcal+' kcal</span></div><button id="etgt" style="color:var(--blue);font-size:12.5px;padding:6px 0 6px 10px">改目标</button></div>'
+  +'<div class="bar" style="margin-top:12px"><i style="width:'+pc(tt.k,t.kcal)+'%;background:'+(tt.k>t.kcal?'var(--red)':'var(--blue)')+'"></i></div>'
+  +'<div class="mac">'+macCell('蛋白',tt.p,t.protein,'var(--blue)')+macCell('碳水',tt.c,t.carb,'var(--green)')+macCell('脂肪',tt.f,t.fat,'var(--orange)')+'</div>'
+  +'<div class="sub" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--sep)">还差 <b>'+Math.max(0,t.kcal-tt.k).toFixed(0)+'</b> kcal · 蛋白 <b>'+Math.max(0,t.protein-tt.p).toFixed(0)+'</b> g · 碳水 <b>'+Math.max(0,t.carb-tt.c).toFixed(0)+'</b> g · 脂肪 <b>'+Math.max(0,t.fat-tt.f).toFixed(0)+'</b> g</div></div>'
+  +'<div class="sec">'+(isT?'今天':'这天')+'吃了 '+L.length+' 条</div><div class="list">'
+  +(L.length?L.map(l=>{const r=num(l.gram)/100;return '<div class="swipe"><div class="db" data-del="'+l.id+'">删除</div><div class="srow" data-r="'+l.id+'"><div class="l"><div class="n">'+esc(l.name)+'</div><div class="s">'+num(l.gram)+'g · 蛋白 '+(num(l.p)*r).toFixed(1)+' · 碳水 '+(num(l.c)*r).toFixed(1)+' · 脂肪 '+(num(l.f)*r).toFixed(1)+'</div></div><div class="r"><div class="k">'+(num(l.k)*r).toFixed(0)+'</div><div class="g">kcal</div></div></div></div>'}).join(''):'<div class="empty">还没有记录<br>点下面「＋ 记一笔」</div>')
+  +'</div><div class="addbtn" id="madd">＋ 记一笔</div>';
+  $('#pv').onclick=()=>{mDate=addDays(mDate,-1);renderMeal()};
+  const nx=$('#nx');if(nx)nx.onclick=()=>{const n=addDays(mDate,1);if(n<=TODAY()){mDate=n;renderMeal()}};
+  $('#dp').onchange=e=>{if(e.target.value&&e.target.value<=TODAY()){mDate=e.target.value;renderMeal()}};
+  $('#madd').onclick=()=>mealEditor(null);
+  $('#etgt').onclick=tgtEditor;
+  $$('[data-del]',b).forEach(e=>e.onclick=()=>{DB.logs=DB.logs.filter(x=>x.id!==e.dataset.del);LS.s('logs',DB.logs);renderMeal();toast('已删除')});
+  $$('.srow',b).forEach(e=>{swipe(e);e.onclick=()=>{if(!window.__row)mealEditor(e.dataset.r)}});
 }
-document.getElementById('tabbar').addEventListener('click',function(e){
-  var b=e.target.closest('.tab');
-  if(b)go(+b.dataset.i);
-});
-
-function pad(n){return(n<10?'0':'')+n;}
-function dkey(d){d=d||new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
-function dparse(k){var a=k.split('-').map(Number);return new Date(a[0],a[1]-1,a[2]);}
-function dshift(k,n){var d=dparse(k);d.setDate(d.getDate()+n);return dkey(d);}
-function dfmt(k){var d=dparse(k);return(d.getMonth()+1)+'月'+d.getDate()+'日';}
-function wcn(k){return'日一二三四五六'[dparse(k).getDay()];}
-function ddiff(a,b){return Math.round((dparse(b)-dparse(a))/86400000);}
-function r1(n){return Math.round(n*10)/10;}
-function r2(n){return Math.round(n*100)/100;}
-function num(v){var n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n;}
-function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-function bar(v,t,c,h){
-  h=h||8;
-  var pc=t>0?Math.min(v/t,1)*100:0,over=t>0&&v>t;
-  return '<div class="bar" style="height:'+h+'px;border-radius:'+(h/2)+'px"><i style="width:'+pc.toFixed(1)+'%;background:'+(over?'var(--red)':c)+'"></i></div>';
+function mealEditor(id){
+  const ed=id?DB.logs.find(x=>x.id===id):null,d=ed||{name:'',gram:'',k:'',p:'',c:'',f:''};
+  const ch=DB.foods.slice().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)).slice(0,12);
+  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">'+(ed?'编辑记录':'记一笔')+'</span><span class="s" id="ok">保存</span></div><div class="sb">'
+  +(ch.length?'<div class="f"><label>食物库（点一下自动填）</label><div class="chips">'+ch.map(f=>'<div class="chip" data-f="'+f.id+'">'+esc(f.n)+'</div>').join('')+'</div></div>':'')
+  +'<div class="f"><label>吃了什么</label><input id="a_name" placeholder="名称" value="'+esc(d.name)+'"></div>'
+  +'<div class="f"><label>克数</label><input id="a_gram" type="number" inputmode="decimal" placeholder="150" value="'+esc(d.gram)+'"></div>'
+  +'<div class="sec" style="margin:16px 4px 10px">每 100g 营养</div>'
+  +'<div class="row"><div class="f"><label>热量 kcal</label><input id="a_k" type="number" inputmode="decimal" value="'+esc(d.k)+'"></div><div class="f"><label>蛋白 g</label><input id="a_p" type="number" inputmode="decimal" value="'+esc(d.p)+'"></div></div>'
+  +'<div class="row"><div class="f"><label>碳水 g</label><input id="a_c" type="number" inputmode="decimal" value="'+esc(d.c)+'"></div><div class="f"><label>脂肪 g</label><input id="a_f" type="number" inputmode="decimal" value="'+esc(d.f)+'"></div></div>'
+  +(ed?'<div class="danger" id="del">删除这条记录</div>':'<div class="chips" style="margin-top:2px"><div class="chip on" id="keep">✓ 存进食物库</div></div>')
+  +'</div>');
+  let keep=true,pid=null;
+  const kp=$('#keep',s.el);if(kp)kp.onclick=()=>{keep=!keep;kp.classList.toggle('on',keep)};
+  s.qa('.chip[data-f]').forEach(c=>c.onclick=()=>{
+    s.qa('.chip[data-f]').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+    const f=DB.foods.find(x=>x.id===c.dataset.f);if(!f)return;pid=f.id;
+    s.q('#a_name').value=f.n;s.q('#a_k').value=num(f.k);s.q('#a_p').value=num(f.p);s.q('#a_c').value=num(f.c);s.q('#a_f').value=num(f.f);
+    if(!s.q('#a_gram').value)s.q('#a_gram').value=100});
+  $('#ok',s.el).onclick=()=>{
+    const name=s.q('#a_name').value.trim()||'未命名',gram=num(s.q('#a_gram').value);
+    if(gram<=0){s.q('#a_gram').focus();toast('填一下克数');return}
+    const o={id:ed?ed.id:uid('m'),date:ed?ed.date:mDate,name:name,gram:gram,k:num(s.q('#a_k').value),p:num(s.q('#a_p').value),c:num(s.q('#a_c').value),f:num(s.q('#a_f').value)};
+    if(ed)DB.logs[DB.logs.findIndex(x=>x.id===ed.id)]=o;else DB.logs.push(o);
+    if(!ed&&keep&&!pid){const ex=DB.foods.find(x=>x.n===name);if(ex){ex.k=o.k;ex.p=o.p;ex.c=o.c;ex.f=o.f}else DB.foods.push({id:uid('f'),n:name,k:o.k,p:o.p,c:o.c,f:o.f,fav:false})}
+    LS.s('logs',DB.logs);LS.s('foods',DB.foods);s.close();renderMeal();toast(ed?'已保存':'已记下')};
+  const dl=$('#del',s.el);if(dl)dl.onclick=()=>{DB.logs=DB.logs.filter(x=>x.id!==ed.id);LS.s('logs',DB.logs);s.close();renderMeal();toast('已删除')};
 }
-
-var DF=[
-  ['混合坚果',600,20,20,50],['鸡胸肉（熟）',165,31,0,3.6],['白米饭（熟）',116,2.6,25.9,0.3],
-  ['鸡蛋',143,12.6,0.7,9.5],['全麦面包',247,13,41,3.4],['牛奶',61,3.2,4.8,3.3],
-  ['燕麦片',380,13,67,7],['西兰花',34,2.8,7,0.4],['苹果',52,0.3,14,0.2],
-  ['香蕉',89,1.1,23,0.3],['瘦牛肉',250,26,0,15],['三文鱼',208,20,0,13],
-  ['无糖酸奶',59,10,3.6,0.4],['花生酱',588,25,20,50],['蛋白粉',380,80,5,3]
-];
-var META=[
-  {k:'p',n:'蛋白质',c:'var(--blue)'},
-  {k:'c',n:'碳水',c:'var(--green)'},
-  {k:'f',n:'脂肪',c:'var(--purple)'}
-];
-var KEY='diet_v2';
-function makeFoods(){return DF.map(function(a,i){return{id:'b'+i,n:a[0],k:a[1],p:a[2],c:a[3],f:a[4],own:false};});}
-function blank(){
-  return{goals:{kcal:1800,p:120,c:200,f:60,height:0,target:0},
-    foods:makeFoods(),log:[],costs:[],weights:[],plan:null};
-}
-var DB;
-try{DB=JSON.parse(localStorage.getItem(KEY));}catch(e){}
-if(!DB||!DB.foods)DB=blank();
-['goals','foods','log','costs','weights'].forEach(function(k){if(!DB[k])DB[k]=blank()[k];});
-function save(){try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
-function sumLog(l){return l.reduce(function(a,e){a.k+=e.k;a.p+=e.p;a.c+=e.c;a.f+=e.f;return a;},{k:0,p:0,c:0,f:0});}
-
-var sheetEl=document.createElement('div');
-sheetEl.className='sheet';
-sheetEl.innerHTML='<div class="shd"><button class="l">取消</button><b></b><button class="r">保存</button></div><div class="sbd"></div>';
-document.body.appendChild(sheetEl);
-var shdL=sheetEl.querySelector('.shd .l'),shdT=sheetEl.querySelector('.shd b'),
-    shdR=sheetEl.querySelector('.shd .r'),sbd=sheetEl.querySelector('.sbd');
-function canSave(ok){shdR.disabled=!ok;}
-function sheet(o){
-  shdT.textContent=o.title||'';
-  sbd.innerHTML=o.body||'';
-  sbd.scrollTop=0;
-  shdL.textContent=o.left||'取消';
-  shdL.onclick=o.onLeft||closeSheet;
-  if(o.onSave){
-    shdR.style.display='';
-    shdR.textContent=o.save||'保存';
-    shdR.disabled=!!o.disabled;
-    shdR.onclick=o.onSave;
-  }else shdR.style.display='none';
-  requestAnimationFrame(function(){sheetEl.classList.add('on');});
-  if(o.after)o.after();
-}
-function closeSheet(){sheetEl.classList.remove('on');}
-function bind(id,fn){var el=document.getElementById(id);if(el)el.oninput=function(){fn(this.value);};}
-function fieldRow(label,id,val,unit){
-  var v=(val===0||val)?val:'';
-  return '<div class="field"><label>'+label+'</label><input id="'+id+'" type="number" inputmode="decimal" value="'+esc(v)+'"><span class="u">'+unit+'</span></div>';
-}
-function calcRows(k,p,c,f){
-  return '<div class="row"><span class="g">热量</span><span class="v mid" style="color:var(--orange)">'+k+' 千卡</span></div>'+
-    '<div class="row"><span class="g">蛋白质</span><span class="v mid" style="color:var(--blue)">'+p+' 克</span></div>'+
-    '<div class="row"><span class="g">碳水</span><span class="v mid" style="color:var(--green)">'+c+' 克</span></div>'+
-    '<div class="row"><span class="g">脂肪</span><span class="v mid" style="color:var(--purple)">'+f+' 克</span></div>';
+function tgtEditor(){
+  const t=DB.target;
+  const s=dlg('<h3>每日目标</h3><div class="f"><label>热量 kcal</label><input id="t_k" type="number" inputmode="decimal" value="'+t.kcal+'"></div>'
+  +'<div class="row"><div class="f"><label>蛋白 g</label><input id="t_p" type="number" inputmode="decimal" value="'+t.protein+'"></div><div class="f"><label>碳水 g</label><input id="t_c" type="number" inputmode="decimal" value="'+t.carb+'"></div></div>'
+  +'<div class="f"><label>脂肪 g</label><input id="t_f" type="number" inputmode="decimal" value="'+t.fat+'"></div>'
+  +'<div class="dbtns"><button data-close>取消</button><button class="p" id="ok">保存</button></div>');
+  $('#ok',s.el).onclick=()=>{
+    DB.target={kcal:num(s.q('#t_k').value)||1400,protein:num(s.q('#t_p').value)||105,carb:num(s.q('#t_c').value)||175,fat:num(s.q('#t_f').value)||31};
+    LS.s('target',DB.target);s.close();renderMeal();toast('目标已更新')};
 }
 
-function defaultPlan(){
-  var L=DB.weights.slice().sort(function(a,b){return a.date<b.date?-1:1;});
-  var last=L[L.length-1];
-  return{on:false,gender:'f',age:30,height:num(DB.goals.height)||165,
-    weight:last?last.v:60,trainMin:0,coef:5,start:dkey(),weeks:8,floor:80};
+/* ---------- 食物库 ---------- */
+let fq='';
+function renderFood(){
+  const b=$('#foodApp');if(!b)return;if(window.__row){window.__row.style.transform='';window.__row=null}
+  b.innerHTML='<div style="margin-bottom:14px"><input id="fq" placeholder="搜索食物" value="'+esc(fq)+'" style="width:100%;background:var(--card);border-radius:14px;padding:13px 16px;font-size:16px"></div><div class="sec" id="fc"></div><div class="list" id="fl"></div><div class="addbtn" id="fadd">＋ 添加食物</div>';
+  $('#fq',b).oninput=e=>{fq=e.target.value;paintFood()};
+  $('#fadd',b).onclick=()=>foodEditor(null);
+  paintFood();
 }
-function computePlan(p){
-  var sex=p.gender==='m'?5:-161;
-  var bmr=10*num(p.weight)+6.25*num(p.height)-5*num(p.age)+sex;
-  var cals=Math.max(0,bmr+num(p.trainMin)*num(p.coef));
-  return{bmr:bmr,cals:cals,
-    carbs:Math.round(cals*.5/4),protein:Math.round(cals*.3/4),fat:Math.round(cals*.2/9)};
+function paintFood(){
+  const q=fq.trim().toLowerCase();let L=DB.foods.slice();
+  if(q)L=L.filter(f=>String(f.n||'').toLowerCase().indexOf(q)>=0);
+  L.sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)||String(a.n).localeCompare(String(b.n),'zh'));
+  $('#fc').textContent=q?'找到 '+L.length+' 种':'共 '+DB.foods.length+' 种 ｜ 收藏 '+DB.foods.filter(f=>f.fav).length;
+  const w=$('#fl');
+  if(!L.length){w.innerHTML='<div class="empty">没找到<br>换个词，或点下面添加</div>';return}
+  w.innerHTML=L.map(f=>'<div class="swipe"><div class="db" data-del="'+f.id+'">删除</div><div class="srow" data-r="'+f.id+'"><div class="l"><div class="n">'+(f.fav?'★ ':'')+esc(f.n)+'</div><div class="s">蛋白 '+num(f.p)+' · 碳水 '+num(f.c)+' · 脂肪 '+num(f.f)+'</div></div><div class="r"><div class="k">'+num(f.k)+'</div><div class="g">kcal/100g</div></div></div></div>').join('');
+  $$('[data-del]',w).forEach(e=>e.onclick=()=>{DB.foods=DB.foods.filter(x=>x.id!==e.dataset.del);LS.s('foods',DB.foods);renderFood();toast('已删除')});
+  $$('.srow',w).forEach(e=>{swipe(e);e.onclick=()=>{if(!window.__row)foodEditor(e.dataset.r)}});
 }
-function weighAt(date){
-  var best=null;
-  DB.weights.forEach(function(w){if(w.date<=date&&(!best||w.date>best.date))best=w;});
-  return best?best.v:null;
+function foodEditor(id){
+  const ed=id?DB.foods.find(f=>f.id===id):null,d=ed||{n:'',k:'',p:'',c:'',f:'',fav:false},fv=v=>(v==null||v==='')?'':v;
+  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">'+(ed?'编辑食物':'添加食物')+'</span><span class="s" id="ok">保存</span></div><div class="sb">'
+  +'<div class="f"><label>名称</label><input id="e_n" placeholder="燕麦片" value="'+esc(d.n)+'"></div>'
+  +'<div class="sec" style="margin:16px 4px 10px">每 100g 营养</div>'
+  +'<div class="row"><div class="f"><label>热量 kcal</label><input id="e_k" type="number" inputmode="decimal" value="'+fv(d.k)+'"></div><div class="f"><label>蛋白 g</label><input id="e_p" type="number" inputmode="decimal" value="'+fv(d.p)+'"></div></div>'
+  +'<div class="row"><div class="f"><label>碳水 g</label><input id="e_c" type="number" inputmode="decimal" value="'+fv(d.c)+'"></div><div class="f"><label>脂肪 g</label><input id="e_f" type="number" inputmode="decimal" value="'+fv(d.f)+'"></div></div>'
+  +'<div class="chips" style="margin-top:2px"><div class="chip'+(d.fav?' on':'')+'" id="fav">★ 收藏</div></div>'
+  +(ed?'<div class="danger" id="del">删除食物</div>':'')+'</div>');
+  let fav=!!d.fav;$('#fav',s.el).onclick=()=>{fav=!fav;$('#fav',s.el).classList.toggle('on',fav)};
+  $('#ok',s.el).onclick=()=>{
+    const name=s.q('#e_n').value.trim();if(!name){s.q('#e_n').focus();toast('填个名称');return}
+    const o={id:ed?ed.id:uid('f'),n:name,k:num(s.q('#e_k').value),p:num(s.q('#e_p').value),c:num(s.q('#e_c').value),f:num(s.q('#e_f').value),fav:fav};
+    if(ed)DB.foods[DB.foods.findIndex(x=>x.id===ed.id)]=o;else DB.foods.push(o);
+    LS.s('foods',DB.foods);s.close();renderFood();toast(ed?'已保存':'已添加')};
+  const dl=$('#del',s.el);if(dl)dl.onclick=()=>{DB.foods=DB.foods.filter(x=>x.id!==ed.id);LS.s('foods',DB.foods);s.close();renderFood();toast('已删除')};
 }
-function buildSchedule(p){
-  var c0=computePlan(p),out=[],carb=c0.carbs,cur0=p.start,today=dkey();
-  var n=Math.max(1,Math.min(52,Math.round(num(p.weeks))||8));
-  var floor=num(p.floor)||80;
-  for(var i=0;i<n;i++){
-    var end=dshift(cur0,6);
-    var w0=weighAt(cur0)||weighAt(dshift(cur0,-1));
-    var w1=weighAt(end);
-    var drop=null,action=null;
-    if(w0&&w1){
-      drop=(w0-w1)/w0*100;
-      if(drop>=.5&&drop<=1)action='keep';
-      else if(drop>1)action='hold';
-      else action='cut';
-    }
-    var status='future';
-    if(end<today)status='done';
-    else if(cur0<=today&&today<=end)status='now';
-    out.push({week:i+1,start:cur0,end:end,carb:carb,w0:w0,w1:w1,drop:drop,action:action,status:status});
-    if(action==='cut')carb=Math.max(floor,carb-20);
-    cur0=dshift(end,1);
+
+/* ---------- 花费 ---------- */
+function calc(it){
+  const pg=num(it.packGram),pcn=num(it.packCount)||1,daily=num(it.dailyGram),total=pg*pcn;
+  const unit=it.priceMode==='pack'?(pg>0?num(it.pricePerPack)/pg:0):num(it.pricePer100g)/100;
+  const perDay=unit*daily,stock=(it.stockGram===''||it.stockGram==null)?total:num(it.stockGram);
+  return{pg:pg,pcn:pcn,daily:daily,total:total,unit100:unit*100,perDay:perDay,perMonth:perDay*30,stock:stock,daysTotal:daily>0?total/daily:0,daysLeft:daily>0?stock/daily:0};
+}
+function renderCost(){
+  const b=$('#costApp');if(!b)return;
+  const rows=DB.cost.map(it=>Object.assign({},it,calc(it)));
+  const pd=rows.reduce((s,r)=>s+r.perDay,0);
+  const low=rows.filter(r=>r.daily>0&&r.daysLeft<7).sort((a,c)=>a.daysLeft-c.daysLeft);
+  let h='<div class="sum"><div><div class="k">每天成本</div><div class="v">¥'+pd.toFixed(2)+'</div></div><div><div class="k">每月成本</div><div class="v">¥'+(pd*30).toFixed(0)+'</div></div></div>';
+  if(low.length){h+='<div class="sec">库存倒计时</div>';low.forEach(r=>{h+='<div class="item"><div class="ih"><div class="nm">'+esc(r.name)+'</div><div class="rt" style="color:var(--red)">剩 '+r.daysLeft.toFixed(0)+' 天</div></div><div class="sub">还剩 <b>'+r.stock.toFixed(0)+'</b> g ｜ 每天 '+r.daily+' g</div><div class="bar s" style="margin-top:10px"><i style="width:'+Math.max(3,Math.min(100,r.daysLeft/30*100))+'%;background:var(--red)"></i></div></div>'})}
+  h+='<div class="sec">商品（'+DB.cost.length+'）</div>';
+  if(!rows.length){h+='<div class="list"><div class="empty">还没有商品<br>点下面「＋ 添加商品」</div></div>'}
+  else{h+='<div class="list">'+rows.map(r=>{
+    const m=r.priceMode==='pack'?'¥'+num(r.pricePerPack)+' / 包 · 每包 '+r.pg+'g':'¥'+num(r.pricePer100g)+' / 100g';
+    const nut=(num(r.kcal)||num(r.protein)||num(r.carb)||num(r.fat))?'<br>每100g：'+num(r.kcal)+' kcal · 蛋白 '+num(r.protein)+' · 碳水 '+num(r.carb)+' · 脂肪 '+num(r.fat):'';
+    return '<div class="srow" data-c="'+r.id+'" style="align-items:flex-start"><div class="l"><div class="n">'+esc(r.name)+'</div><div class="s">'+m+' ｜ 折合 ¥'+r.unit100.toFixed(2)+'/100g<br>'+r.pg+'g × '+r.pcn+' 包 = '+r.total+'g ｜ 每天 '+r.daily+'g<br>整批能吃 <b>'+r.daysTotal.toFixed(0)+'</b> 天 ｜ 每月 <b>¥'+r.perMonth.toFixed(0)+'</b>'+nut+'</div></div><div class="r"><div class="k">¥'+r.perDay.toFixed(2)+'</div><div class="g">/天</div></div></div>'}).join('')+'</div>'}
+  h+='<div class="addbtn" id="cadd">＋ 添加商品</div>';
+  b.innerHTML=h;
+  $('#cadd',b).onclick=()=>costEditor(null);
+  $$('[data-c]',b).forEach(e=>e.onclick=()=>costEditor(e.dataset.c));
+}
+function costEditor(id){
+  const ed=id?DB.cost.find(x=>x.id===id):null;
+  const d=ed||{name:'',priceMode:'gram',pricePer100g:'',pricePerPack:'',packGram:'',packCount:1,dailyGram:'',stockGram:'',kcal:'',protein:'',carb:'',fat:''};
+  const fv=v=>(v==null||v==='')?'':v,isP=d.priceMode==='pack';
+  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">'+(ed?'编辑商品':'添加商品')+'</span><span class="s" id="ok">保存</span></div><div class="sb">'
+  +'<div class="f"><label>名称</label><input id="c_name" placeholder="散装面包" value="'+esc(d.name)+'"></div>'
+  +'<div class="f"><label>计价方式</label><div class="seg"><button data-m="gram" class="'+(isP?'':'on')+'">按克</button><button data-m="pack" class="'+(isP?'on':'')+'">按包</button></div></div>'
+  +'<div class="f" id="gB"'+(isP?' style="display:none"':'')+'><label>价格（元 / 100g）</label><input id="c_u" type="number" inputmode="decimal" placeholder="12.5" value="'+fv(d.pricePer100g)+'"></div>'
+  +'<div class="f" id="pB"'+(isP?'':' style="display:none"')+'><label>价格（元 / 包）</label><input id="c_pp" type="number" inputmode="decimal" placeholder="15" value="'+fv(d.pricePerPack)+'"></div>'
+  +'<div class="row"><div class="f"><label>每包多少克</label><input id="c_pg" type="number" inputmode="decimal" placeholder="200" value="'+fv(d.packGram)+'"></div><div class="f"><label>分成几包</label><input id="c_pc" type="number" inputmode="decimal" placeholder="4" value="'+fv(d.packCount)+'"></div></div>'
+  +'<div class="f"><label>每天吃多少克</label><input id="c_d" type="number" inputmode="decimal" placeholder="50" value="'+fv(d.dailyGram)+'"></div>'
+  +'<div class="f"><label>现在还剩多少克（留空＝满）</label><input id="c_st" type="number" inputmode="decimal" value="'+fv(d.stockGram)+'"></div>'
+  +'<div class="sec" style="margin:18px 4px 10px">营养成分（每 100g）</div>'
+  +'<div class="row"><div class="f"><label>热量 kcal</label><input id="c_k" type="number" inputmode="decimal" value="'+fv(d.kcal)+'"></div><div class="f"><label>蛋白 g</label><input id="c_p" type="number" inputmode="decimal" value="'+fv(d.protein)+'"></div></div>'
+  +'<div class="row"><div class="f"><label>碳水 g</label><input id="c_c" type="number" inputmode="decimal" value="'+fv(d.carb)+'"></div><div class="f"><label>脂肪 g</label><input id="c_f" type="number" inputmode="decimal" value="'+fv(d.fat)+'"></div></div>'
+  +(ed?'<div class="danger" id="del">删除商品</div>':'')+'</div>');
+  let m=d.priceMode;
+  s.qa('.seg button').forEach(x=>x.onclick=()=>{m=x.dataset.m;s.qa('.seg button').forEach(y=>y.classList.toggle('on',y===x));s.q('#gB').style.display=m==='pack'?'none':'';s.q('#pB').style.display=m==='pack'?'':'none'});
+  $('#ok',s.el).onclick=()=>{
+    const o={id:ed?ed.id:uid('c'),name:s.q('#c_name').value.trim()||'未命名',priceMode:m,pricePer100g:s.q('#c_u').value.trim(),pricePerPack:s.q('#c_pp').value.trim(),packGram:s.q('#c_pg').value.trim(),packCount:s.q('#c_pc').value.trim()||1,dailyGram:s.q('#c_d').value.trim(),stockGram:s.q('#c_st').value.trim(),kcal:s.q('#c_k').value.trim(),protein:s.q('#c_p').value.trim(),carb:s.q('#c_c').value.trim(),fat:s.q('#c_f').value.trim()};
+    if(ed)DB.cost[DB.cost.findIndex(x=>x.id===ed.id)]=o;else DB.cost.push(o);
+    LS.s('cost',DB.cost);s.close();renderCost();toast(ed?'已保存':'已添加')};
+  const dl=$('#del',s.el);if(dl)dl.onclick=()=>{DB.cost=DB.cost.filter(x=>x.id!==ed.id);LS.s('cost',DB.cost);s.close();renderCost();toast('已删除')};
+}
+
+/* ---------- 体重 ---------- */
+function bmiOf(kg){const h=num(DB.profile.height)/100;return h>0?kg/(h*h):0}
+function bmiL(v){if(!v)return'';if(v<18.5)return'偏瘦';if(v<24)return'正常';if(v<28)return'偏胖';return'肥胖'}
+function wkFb(){
+  const ws=DB.weights.slice().sort((a,b)=>a.date<b.date?-1:1);if(ws.length<2)return null;
+  const last=ws[ws.length-1],goal=addDays(last.date,-7);let prev=null;
+  for(let i=ws.length-2;i>=0;i--){if(ws[i].date<=goal){prev=ws[i];break}}
+  if(!prev)prev=ws[0];if(!prev||prev.date===last.date)return null;
+  const days=Math.max(1,Math.round((pISO(last.date)-pISO(prev.date))/86400000));
+  const dKg=prev.kg-last.kg,wk=prev.kg>0?(dKg/prev.kg)/days*7:0;
+  let kind,title,msg,sug=null;
+  if(wk>=0.01){kind='warn';title='降得太快了';msg='每周降 '+(wk*100).toFixed(1)+'%，超过 1%。按规则：保持当前目标，别急着减。'}
+  else if(wk>=0.005){kind='ok';title='节奏刚好';msg='每周降 '+(wk*100).toFixed(1)+'%，落在 0.5%–1%。按规则：保持不变，继续。'}
+  else{kind='slow';title='掉得有点慢';const nc=Math.max(80,num(DB.target.carb)-20);sug=nc;msg=(dKg>0?'每周只降 ':'体重没降，')+(Math.abs(wk)*100).toFixed(1)+'%，不足 0.5%。按规则：碳水 −20g → <b>'+nc+'g</b>（蛋白脂肪不动）。'+(num(DB.target.carb)<=80?' 已在下限 80g，不再减了。':'')}
+  return{last:last,prev:prev,days:days,dKg:dKg,wk:wk,kind:kind,title:title,msg:msg,sug:sug};
+}
+function trend(cv,pts){
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth||300,h=150;
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);cv.style.height=h+'px';
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  if(pts.length<2){g.fillStyle='#B3B3BE';g.font='13px -apple-system,sans-serif';g.textAlign='center';g.fillText('记两次以上就能看到趋势',w/2,h/2);return}
+  const pad=24,iw=w-pad*2,ih=h-pad*2,ks=pts.map(p=>p.kg);
+  let mn=Math.min.apply(null,ks),mx=Math.max.apply(null,ks);
+  if(mx-mn<1){const m=(mx+mn)/2;mn=m-.5;mx=m+.5}
+  const X=i=>pad+iw*i/(pts.length-1),Y=v=>pad+ih*(1-(v-mn)/(mx-mn));
+  const lg=g.createLinearGradient(0,pad,0,pad+ih);lg.addColorStop(0,'rgba(93,107,168,.2)');lg.addColorStop(1,'rgba(93,107,168,0)');
+  g.beginPath();g.moveTo(X(0),Y(pts[0].kg));pts.forEach((p,i)=>{if(i)g.lineTo(X(i),Y(p.kg))});
+  g.lineTo(X(pts.length-1),pad+ih);g.lineTo(X(0),pad+ih);g.closePath();g.fillStyle=lg;g.fill();
+  g.beginPath();g.moveTo(X(0),Y(pts[0].kg));pts.forEach((p,i)=>{if(i)g.lineTo(X(i),Y(p.kg))});
+  g.strokeStyle='#5D6BA8';g.lineWidth=2.2;g.lineJoin='round';g.lineCap='round';g.stroke();
+  pts.forEach((p,i)=>{if(pts.length>14&&i!==pts.length-1&&i%2)return;const L=i===pts.length-1;g.beginPath();g.arc(X(i),Y(p.kg),L?4.5:2.8,0,Math.PI*2);g.fillStyle=L?'#5D6BA8':'#fff';g.fill();if(!L){g.strokeStyle='#5D6BA8';g.lineWidth=2;g.stroke()}});
+  g.fillStyle='#8A8A99';g.font='11px -apple-system,sans-serif';g.textAlign='left';
+  g.fillText(mx.toFixed(1),pad-6,pad-8);g.fillText(mn.toFixed(1),pad-6,pad+ih+14);
+}
+function renderWeight(){
+  const b=$('#weightApp');if(!b)return;if(window.__row){window.__row.style.transform='';window.__row=null}
+  const ws=DB.weights.slice().sort((a,c)=>a.date<c.date?-1:1),last=ws[ws.length-1],fb=wkFb();
+  const cur=last?num(last.kg):0,bmi=cur?bmiOf(cur):0;
+  let h='<div class="card"><div class="sub" style="margin:0 0 4px">当前体重</div><div style="display:flex;justify-content:space-between;align-items:flex-end"><div class="big">'+(cur?cur.toFixed(1):'—')+'<span class="goal"> kg</span></div><div class="sub" style="margin:0">'+(last?last.date:'还没记过')+'</div></div>';
+  if(bmi)h+='<div class="sub" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep)">BMI <b>'+bmi.toFixed(1)+'</b> ｜ '+bmiL(bmi)+'<span style="color:var(--ter)"> （身高 '+num(DB.profile.height)+' cm）</span></div>';
+  h+='</div>';
+  if(fb){
+    const cc=fb.kind==='ok'?'var(--green)':'var(--red)';
+    const bg=fb.kind==='ok'?'rgba(143,176,166,.14)':fb.kind==='warn'?'rgba(197,99,122,.1)':'rgba(233,166,182,.18)';
+    h+='<div class="sec">7 天反馈</div><div class="item" style="background:'+bg+'"><div class="ih"><div class="nm" style="color:'+cc+'">'+fb.title+'</div><div class="rt" style="color:'+cc+'">'+(fb.dKg>=0?'−':'+')+Math.abs(fb.dKg).toFixed(1)+' kg</div></div><div class="sub">对比 '+fb.prev.date+'（'+fb.prev.kg+' kg）· 间隔 '+fb.days+' 天<br>'+fb.msg+'</div><div class="sub">当前目标：'+DB.target.kcal+' kcal ｜ 碳水 '+DB.target.carb+' g</div>'+(fb.sug!=null&&fb.sug<num(DB.target.carb)?'<div class="addbtn" id="w_ap" style="margin-top:14px;background:rgba(255,255,255,.72);padding:12px">应用：碳水改为 '+fb.sug+' g</div>':'')+'</div>';
   }
-  return out;
+  h+='<div class="sec">趋势</div><div class="card"><canvas id="w_cv" style="width:100%;display:block"></canvas></div>';
+  h+='<div class="sec">记录（'+ws.length+'）</div><div class="list">'+(ws.length?ws.slice().reverse().map(w=>'<div class="swipe"><div class="db" data-del="'+w.id+'">删除</div><div class="srow" data-r="'+w.id+'"><div class="l"><div class="n">'+num(w.kg).toFixed(1)+' kg</div><div class="s">'+w.date+(w.note?' · '+esc(w.note):'')+'</div></div><div class="r"><div class="g">BMI '+(bmiOf(num(w.kg))?bmiOf(num(w.kg)).toFixed(1):'—')+'</div></div></div></div>').join(''):'<div class="empty">还没有记录<br>点下面「＋ 记体重」</div>')+'</div><div class="addbtn" id="wadd">＋ 记体重</div>';
+  b.innerHTML=h;
+  const cv=$('#w_cv',b);if(cv){const pts=ws.slice(-30).map(w=>({date:w.date,kg:num(w.kg)})).filter(p=>p.kg>0);requestAnimationFrame(()=>trend(cv,pts))}
+  const ap=$('#w_ap',b);if(ap)ap.onclick=()=>{DB.target.carb=fb.sug;DB.target.kcal=Math.max(0,num(DB.target.kcal)-80);LS.s('target',DB.target);renderWeight();toast('碳水已改为 '+fb.sug+' g')};
+  $('#wadd',b).onclick=()=>weightEditor(null);
+  $$('[data-del]',b).forEach(e=>e.onclick=()=>{DB.weights=DB.weights.filter(x=>x.id!==e.dataset.del);LS.s('weights',DB.weights);renderWeight();toast('已删除')});
+  $$('.srow',b).forEach(e=>{swipe(e);e.onclick=()=>{if(!window.__row)weightEditor(e.dataset.r)}});
 }
-function weekTarget(k){
-  var p=DB.plan;
-  if(p&&p.on){
-    var sch=buildSchedule(p);
-    for(var i=0;i<sch.length;i++){
-      if(k>=sch[i].start&&k<=sch[i].end){
-        var c=computePlan(p);
-        return{carbs:sch[i].carb,protein:c.protein,fat:c.fat,week:sch[i].week};
-      }
-    }
-  }
-  return{carbs:DB.goals.c,protein:DB.goals.p,fat:DB.goals.f,week:0};
-} 
-var todayDate=dkey();
-function vToday(){
-  var isT=todayDate===dkey();
-  var list=DB.log.filter(function(e){return e.date===todayDate;});
-  var s=sumLog(list),wt=weekTarget(todayDate),goalK=DB.goals.kcal,left=goalK-s.k,o=[];
-  o.push('<div class="h1">'+(isT?'今天':dfmt(todayDate))+'<small>周'+wcn(todayDate)+' · '+list.length+' 条记录</small></div>');
-  o.push('<div class="between" style="margin-bottom:14px">');
-  o.push('<button class="btn sec sm" data-act="nav" data-n="-1">‹ 前一天</button>');
-  o.push(isT?'<span class="gray" style="font-size:13px">'+dfmt(todayDate)+'</span>'
-    :'<button class="btn sec sm" data-act="nav" data-n="0">回到今天</button>');
-  o.push('<button class="btn sec sm" data-act="nav" data-n="1"'+(isT?' style="opacity:.35"':'')+'>后一天 ›</button>');
-  o.push('</div>');
-  o.push('<div class="card"><div class="between"><span class="caps">热量</span>'+
-    '<span class="mid" style="font-size:21px">'+Math.round(s.k)+
-    '<span class="gray" style="font-size:14px;font-weight:400"> / '+goalK+' 千卡</span></span></div>');
-  o.push('<div style="height:11px"></div>');
-  o.push(bar(s.k,goalK,'var(--orange)',10));
-  o.push('<div class="tip">'+(left>=0?'还可以吃 '+Math.round(left)+' 千卡':'已超出 '+Math.round(-left)+' 千卡')+'</div></div>');
-  o.push('<div class="card"><div class="between"><span class="caps">营养素</span>'+
-    (wt.week?'<span class="gray" style="font-size:12px">第 '+wt.week+' 周目标</span>':'')+'</div>');
-  META.forEach(function(m,i){
-    var tgt=m.k==='p'?wt.protein:m.k==='c'?wt.carbs:wt.fat;
-    o.push('<div style="margin-top:'+(i===0?14:16)+'px">');
-    o.push('<div class="between"><span>'+m.n+'</span><span class="mid">'+r1(s[m.k])+
-      '<span class="gray" style="font-weight:400;font-size:13px"> / '+r1(tgt)+' 克</span></span></div>');
-    o.push('<div style="height:7px"></div>'+bar(s[m.k],tgt,m.c,7)+'</div>');
-  });
-  o.push('</div>');
-  var s7={k:0,p:0,c:0,f:0},n7=0;
-  for(var i=0;i<7;i++){
-    var l=DB.log.filter(function(e){return e.date===dshift(dkey(),-i);});
-    if(l.length){var x=sumLog(l);s7.k+=x.k;s7.p+=x.p;s7.c+=x.c;s7.f+=x.f;n7++;}
-  }
-  if(n7>1){
-    o.push('<div class="card" style="background:#E1EEF4"><div class="caps" style="margin-bottom:8px">最近 '+n7+' 天平均</div>');
-    o.push('<div style="font-size:15px;line-height:1.75">热量 <b>'+Math.round(s7.k/n7)+'</b> 千卡<br>'+
-      '蛋白 <b>'+r1(s7.p/n7)+'</b>g · 碳水 <b>'+r1(s7.c/n7)+'</b>g · 脂肪 <b>'+r1(s7.f/n7)+'</b>g</div></div>');
-  }
-  o.push('<div class="h2" style="display:flex;justify-content:space-between;align-items:center">'+
-    '<span>饮食记录</span><button style="color:var(--blue);font-size:15px" data-act="addLog">+ 添加</button></div>');
-  if(!list.length){
-    o.push('<div class="card"><div class="empty">'+ic('bowl',38)+'<b>还没有记录</b><p>点下面按钮记下你吃的东西</p></div></div>');
-  }else{
-    o.push('<div class="card pl">');
-    list.forEach(function(e){
-      o.push('<div class="row ck" data-act="editLog" data-id="'+e.id+'"><div class="g">'+
-        '<div class="t">'+esc(e.n)+'</div><div class="s">'+r1(e.g)+' 克 · 蛋'+r1(e.p)+' 碳'+r1(e.c)+' 脂'+r1(e.f)+'</div></div>'+
-        '<div class="v mid" style="color:var(--label)">'+Math.round(e.k)+'<span class="gray" style="font-size:12px"> 千卡</span></div></div>');
-    });
-    o.push('</div>');
-  }
-  o.push('<button class="btn" data-act="addLog">'+ic('plus',20)+'添加食物</button>');
-  return o.join('');
+function weightEditor(id){
+  const ed=id?DB.weights.find(x=>x.id===id):null;
+  const so=DB.weights.slice().sort((a,c)=>a.date<c.date?-1:1),last=so[so.length-1];
+  const d=ed||{date:TODAY(),kg:'',note:''};
+  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">'+(ed?'编辑体重':'记体重')+'</span><span class="s" id="ok">保存</span></div><div class="sb">'
+  +'<div class="f"><label>日期</label><input id="w_dt" type="date" value="'+d.date+'" max="'+TODAY()+'"></div>'
+  +'<div class="f"><label>体重 kg</label><input id="w_kg" type="number" inputmode="decimal" step="0.1" placeholder="'+(last?num(last.kg):'55.0')+'" value="'+(d.kg===''?'':esc(d.kg))+'"></div>'
+  +'<div class="f"><label>备注（可留空）</label><input id="w_nt" placeholder="早上空腹" value="'+esc(d.note||'')+'"></div>'
+  +(ed?'<div class="danger" id="del">删除这条</div>':'')+'</div>');
+  $('#ok',s.el).onclick=()=>{
+    const kg=num(s.q('#w_kg').value);if(kg<=0){s.q('#w_kg').focus();toast('填一下体重');return}
+    const o={id:ed?ed.id:uid('w'),date:s.q('#w_dt').value||TODAY(),kg:kg,note:s.q('#w_nt').value.trim()};
+    if(ed)DB.weights[DB.weights.findIndex(x=>x.id===ed.id)]=o;else DB.weights.push(o);
+    LS.s('weights',DB.weights);s.close();renderWeight();toast('已记录')};
+  const dl=$('#del',s.el);if(dl)dl.onclick=()=>{DB.weights=DB.weights.filter(x=>x.id!==ed.id);LS.s('weights',DB.weights);s.close();renderWeight();toast('已删除')};
 }
 
-var LG=null;
-function openLog(id){
-  if(id){
-    var e=DB.log.filter(function(x){return x.id===id;})[0];
-    if(!e)return;
-    LG={id:id,step:'amt',grams:e.g,food:{n:e.n,k:e.per.k,p:e.per.p,c:e.per.c,f:e.per.f}};
-  }else LG={id:null,step:'pick',q:'',grams:100};
-  drawLog();
+/* ---------- 设置 ---------- */
+function sugTgt(){
+  const p=DB.profile,ws=DB.weights.slice().sort((a,b)=>a.date<b.date?-1:1);
+  const kg=ws.length?num(ws[ws.length-1].kg):55;
+  const sex=p.sex==='m'?5:-161;
+  const bmr=10*kg+6.25*num(p.height)-5*num(p.age)+sex;
+  const kcal=Math.max(1000,Math.round(bmr+num(p.minutes)*num(p.act)));
+  return{kcal:kcal,protein:Math.round(kcal*.3/4),carb:Math.max(80,Math.round(kcal*.5/4)),fat:Math.round(kcal*.2/9),bmr:Math.round(bmr)};
 }
-function foodRows(q){
-  var s=(q||'').trim();
-  var list=s?DB.foods.filter(function(f){return f.n.indexOf(s)>=0;}):DB.foods;
-  if(!list.length)return '<div class="empty">'+ic('foods',38)+'<b>没找到</b><p>去「食物」页添加一个</p></div>';
-  return list.map(function(f){
-    return '<div class="row ck" data-act="lgPick" data-id="'+f.id+'"><div class="g">'+
-      '<div class="t">'+esc(f.n)+'</div><div class="s">每100克 '+f.k+'千卡 · 蛋'+f.p+' 碳'+f.c+' 脂'+f.f+'</div></div>'+
-      '<div class="ar" style="color:var(--blue)">'+ic('plus',20)+'</div></div>';
-  }).join('');
+function renderSet(){
+  const b=$('#setApp');if(!b)return;const p=DB.profile,t=DB.target;
+  b.innerHTML='<div class="card"><div class="row"><div class="f"><label>身高 cm</label><input id="s_h" type="number" inputmode="decimal" value="'+p.height+'"></div><div class="f"><label>年龄</label><input id="s_a" type="number" inputmode="decimal" value="'+p.age+'"></div></div>'
+  +'<div class="row"><div class="f"><label>性别</label><div class="seg"><button data-sex="f" class="'+(p.sex==='m'?'':'on')+'">女</button><button data-sex="m" class="'+(p.sex==='m'?'on':'')+'">男</button></div></div>'
+  +'<div class="f"><label>训练强度</label><div class="seg"><button data-act="5" class="'+(num(p.act)===5?'on':'')+'">新手</button><button data-act="8" class="'+(num(p.act)===8?'on':'')+'">普通</button><button data-act="10" class="'+(num(p.act)===10?'on':'')+'">强</button></div></div></div>'
+  +'<div class="f"><label>每天训练多少分钟（不运动填 0）</label><input id="s_m" type="number" inputmode="decimal" value="'+num(p.minutes)+'"></div>'
+  +'<div id="pv" class="sub"></div>'
+  +'<div class="addbtn" id="s_ap" style="margin-top:14px">按 5:3:2 算出并应用</div></div>'
+  +'<div class="sec">当前目标</div><div class="item" id="s_t"><div class="ih"><div class="nm">每日目标</div><div class="rt">改 ›</div></div><div class="sub">热量 <b>'+t.kcal+'</b> kcal<br>蛋白 <b>'+t.protein+'</b> g ｜ 碳水 <b>'+t.carb+'</b> g ｜ 脂肪 <b>'+t.fat+'</b> g</div></div>'
+  +'<div class="sec">数据</div><div class="list"><div class="srow" id="s_ex"><div class="l"><div class="n">导出数据</div><div class="s">生成一段文本，复制保存到备忘录</div></div><div class="r"><div class="g">›</div></div></div><div class="srow" id="s_im"><div class="l"><div class="n">导入数据</div><div class="s">粘贴之前导出的文本</div></div><div class="r"><div class="g">›</div></div></div></div>'
+  +'<div class="danger" id="s_cl">清空全部数据</div>'
+  +'<div class="sub" style="text-align:center;color:var(--ter);margin:20px 0 0">数据只存在这台手机上<br>清理 Safari 数据会丢失，记得偶尔导出</div>';
+  const pv=()=>{const bak=DB.profile;DB.profile={height:num($('#s_h').value)||p.height,age:num($('#s_a').value)||p.age,sex:p.sex,minutes:num($('#s_m').value),act:num(p.act)};const r=sugTgt();DB.profile=bak;$('#pv').innerHTML='基础代谢约 <b>'+r.bmr+'</b> kcal → 建议 <b>'+r.kcal+'</b> kcal ｜ 碳水 <b>'+r.carb+'</b> g · 蛋白 <b>'+r.protein+'</b> g · 脂肪 <b>'+r.fat+'</b> g'};
+  ['s_h','s_a','s_m'].forEach(id=>$('#'+id).oninput=pv);
+  $$('[data-sex]',b).forEach(x=>x.onclick=()=>{p.sex=x.dataset.sex;LS.s('profile',p);renderSet()});
+  $$('[data-act]',b).forEach(x=>x.onclick=()=>{p.act=num(x.dataset.act);LS.s('profile',p);renderSet()});
+  $('#s_ap',b).onclick=()=>{p.height=num($('#s_h').value)||p.height;p.age=num($('#s_a').value)||p.age;p.minutes=num($('#s_m').value);LS.s('profile',p);const r=sugTgt();DB.target={kcal:r.kcal,protein:r.protein,carb:r.carb,fat:r.fat};LS.s('target',DB.target);renderSet();toast('已按 5:3:2 更新目标')};
+  $('#s_t',b).onclick=()=>tgtEditor();
+  $('#s_ex',b).onclick=expData;
+  $('#s_im',b).onclick=impData;
+  $('#s_cl',b).onclick=()=>{const d=dlg('<h3>清空全部数据？</h3><div class="sub" style="margin:-6px 0 0">饮食记录、食物库、花费、体重、目标，全都没了，且无法恢复。</div><div class="dbtns"><button data-close>取消</button><button class="p" id="ok" style="background:var(--red);color:#fff">清空</button></div>');$('#ok',d.el).onclick=()=>{['foods','logs','cost','weights','target','profile'].forEach(k=>localStorage.removeItem('diet::'+k));d.close();location.reload()}};
+  pv();
 }
-function drawLog(){
-  if(LG.step==='pick'){
-    sheet({title:'选择食物',
-      body:'<div class="search">'+ic('search',17)+'<input id="lgq" placeholder="搜索食物" value="'+esc(LG.q)+'">'+
-        '<button class="clr" id="lgc">✕</button></div><div class="card pl" id="lglist">'+foodRows(LG.q)+'</div>',
-      after:function(){
-        var q=document.getElementById('lgq');
-        q.oninput=function(){LG.q=this.value;refreshF();};
-        document.getElementById('lgc').onclick=function(){q.value='';LG.q='';refreshF();};
-      }});
-    return;
-  }
-  var f=LG.food,g=num(LG.grams);
-  sheet({title:f.n,left:'返回',
-    onLeft:function(){LG.step='pick';drawLog();},
-    save:'保存',onSave:saveLog,disabled:g<=0,
-    body:'<div class="card pl"><div class="field"><label>吃了多少</label>'+
-      '<input id="lgg" type="number" inputmode="decimal" value="'+LG.grams+'"><span class="u">克</span></div></div>'+
-      '<div class="smw">'+['20','50','100','150','200'].map(function(v){
-        return '<button class="btn sec sm" data-act="lgG" data-v="'+v+'">'+v+'g</button>';}).join('')+'</div>'+
-      '<div class="h2" style="margin-top:0">这一份</div><div class="card pl" id="lgcalc">'+
-      calcRows(Math.round(f.k*g/100),r1(f.p*g/100),r1(f.c*g/100),r1(f.f*g/100))+'</div>'+
-      (LG.id?'<button class="btn dg" data-act="lgDel" style="margin-top:22px">删除这条记录</button>':''),
-    after:function(){
-      var inp=document.getElementById('lgg');
-      inp.oninput=function(){
-        LG.grams=this.value;
-        var gg=num(this.value),box=document.getElementById('lgcalc');
-        if(box)box.innerHTML=calcRows(Math.round(f.k*gg/100),r1(f.p*gg/100),r1(f.c*gg/100),r1(f.f*gg/100));
-        canSave(gg>0);
-      };
-      canSave(g>0);
-    }});
+function expData(){
+  const txt=JSON.stringify({v:1,foods:DB.foods,logs:DB.logs,cost:DB.cost,weights:DB.weights,target:DB.target,profile:DB.profile});
+  const s=sheet('<div class="sh"><button data-close>关闭</button><span class="t">导出数据</span><span class="s" id="cp">复制</span></div><div class="sb"><div class="sub" style="margin:0 0 10px">全选下面这段，复制到备忘录存着。以后换手机或数据丢了，用它导入就能恢复。</div><textarea id="ta" readonly style="width:100%;height:38vh;border-radius:14px;background:var(--card);padding:14px;font-size:12px;color:var(--sec);font-family:ui-monospace,Menlo,monospace;line-height:1.5;resize:none">'+esc(txt)+'</textarea></div>');
+  $('#cp',s.el).onclick=()=>{const ta=$('#ta',s.el);ta.removeAttribute('readonly');ta.focus();ta.select();ta.setSelectionRange(0,999999);try{const ok=document.execCommand('copy');toast(ok?'已复制':'请长按选中后复制')}catch(e){toast('请长按选中后复制')}ta.setAttribute('readonly','readonly')};
 }
-function refreshF(){var b=document.getElementById('lglist');if(b)b.innerHTML=foodRows(LG.q);}
-function saveLog(){
-  var f=LG.food,g=num(LG.grams);
-  if(!f||g<=0)return;
-  var old=LG.id?DB.log.filter(function(x){return x.id===LG.id;})[0]:null;
-  var rec={id:LG.id||uid('l'),date:old?old.date:todayDate,n:f.n,g:g,
-    per:{k:f.k,p:f.p,c:f.c,f:f.f},
-    k:Math.round(f.k*g/100),p:r1(f.p*g/100),c:r1(f.c*g/100),f:r1(f.f*g/100)};
-  if(LG.id)DB.log=DB.log.map(function(x){return x.id===LG.id?rec:x;});
-  else DB.log.unshift(rec);
-  save();closeSheet();paint(cur);
-}
-function delLog(){
-  if(!LG.id)return;
-  if(!confirm('删除这条记录？'))return;
-  DB.log=DB.log.filter(function(x){return x.id!==LG.id;});
-  save();closeSheet();paint(cur);
+function impData(){
+  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">导入数据</span><span class="s" id="ok">导入</span></div><div class="sb"><div class="sub" style="margin:0 0 10px">把之前导出的那段文本粘进来。注意：会覆盖现在所有数据。</div><textarea id="ta" placeholder="在这里粘贴…" style="width:100%;height:34vh;border-radius:14px;background:var(--card);padding:14px;font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.5;resize:none"></textarea></div>');
+  $('#ok',s.el).onclick=()=>{
+    const raw=$('#ta',s.el).value.trim();if(!raw){toast('还没粘贴');return}
+    let o;try{o=JSON.parse(raw)}catch(e){toast('这段文本不对');return}
+    if(!o||typeof o!=='object'){toast('这段文本不对');return}
+    if(Array.isArray(o.foods)){DB.foods=o.foods;LS.s('foods',DB.foods)}
+    if(Array.isArray(o.logs)){DB.logs=o.logs;LS.s('logs',DB.logs)}
+    if(Array.isArray(o.cost)){DB.cost=o.cost;LS.s('cost',DB.cost)}
+    if(Array.isArray(o.weights)){DB.weights=o.weights;LS.s('weights',DB.weights)}
+    if(o.target){DB.target=o.target;LS.s('target',DB.target)}
+    if(o.profile){DB.profile=o.profile;LS.s('profile',DB.profile)}
+    s.close();go('meal');toast('导入完成')};
 }
 
-function vFoods(){
-  var own=DB.foods.filter(function(f){return f.own;});
-  var base=DB.foods.filter(function(f){return !f.own;});
-  var o=[];
-  o.push('<div class="h1">食物库<small>'+DB.foods.length+' 种 · 自定义 '+own.length+' 种</small></div>');
-  if(own.length)o.push('<div class="h2">我添加的</div><div class="card pl">'+own.map(foodRow).join('')+'</div>');
-  o.push('<div class="h2">常见食物</div><div class="card pl">'+base.map(foodRow).join('')+'</div>');
-  o.push('<button class="btn" data-act="addFood" style="margin-top:6px">'+ic('plus',20)+'新建食物</button>');
-  return o.join('');
-}
-function foodRow(f){
-  return '<div class="row ck" data-act="editFood" data-id="'+f.id+'"><div class="g">'+
-    '<div class="t">'+esc(f.n)+'</div><div class="s">每100克 '+f.k+'千卡 · 蛋'+f.p+' 碳'+f.c+' 脂'+f.f+'</div></div>'+
-    '<div class="ar">'+ic('chev',18)+'</div></div>';
-}
-var FD=null;
-function openFood(id){
-  if(id){
-    var f=DB.foods.filter(function(x){return x.id===id;})[0];
-    if(!f)return;
-    FD={id:id,n:f.n,k:f.k,p:f.p,c:f.c,f:f.f,own:f.own};
-  }else FD={id:null,n:'',k:'',p:'',c:'',f:''};
-  drawFood();
-}
-function drawFood(){
-  sheet({title:FD.id?'编辑食物':'新建食物',save:'保存',onSave:saveFood,disabled:!FD.n.trim(),
-    body:'<div class="h2" style="margin-top:0">名称</div><div class="card pl"><div class="field">'+
-      '<input id="fdn" placeholder="例如：混合坚果" value="'+esc(FD.n)+'" style="width:100%;text-align:left;flex:1"></div></div>'+
-      '<div class="h2">每 100 克营养</div><div class="card pl">'+
-      fieldRow('热量','fdk',FD.k,'千卡')+fieldRow('蛋白质','fdp',FD.p,'克')+
-      fieldRow('碳水','fdc',FD.c,'克')+fieldRow('脂肪','fdf',FD.f,'克')+'</div>'+
-      '<p class="tip">包装上的营养成分表一般就是「每 100 克」的数据，直接照抄即可。</p>'+
-      (FD.id?'<button class="btn dg" data-act="delFood" style="margin-top:22px">删除这个食物</button>':''),
-    after:function(){
-      bind('fdn',function(v){FD.n=v;canSave(!!v.trim());});
-      bind('fdk',function(v){FD.k=v;});
-      bind('fdp',function(v){FD.p=v;});
-      bind('fdc',function(v){FD.c=v;});
-      bind('fdf',function(v){FD.f=v;});
-    }});
-}
-function saveFood(){
-  var n=FD.n.trim();
-  if(!n)return;
-  var o={n:n,k:num(FD.k),p:num(FD.p),c:num(FD.c),f:num(FD.f)};
-  if(FD.id)DB.foods=DB.foods.map(function(x){return x.id===FD.id?Object.assign({},x,o):x;});
-  else DB.foods.unshift(Object.assign({id:uid('c'),own:true},o));
-  save();closeSheet();paint(cur);
-}
-function delFood(){
-  if(!FD.id)return;
-  if(!confirm('删除「'+FD.n+'」？'))return;
-  DB.foods=DB.foods.filter(function(x){return x.id!==FD.id;});
-  save();closeSheet();paint(cur);
-}
-
-function costCalc(it){
-  var price=num(it.price),w=num(it.weight),d=num(it.daily);
-  var perG=w>0?price/w:0,perDay=perG*d,totalDays=d>0?w/d:0;
-  var used=it.start?Math.max(0,ddiff(it.start,dkey())):0;
-  var left=Math.max(0,totalDays-used);
-  var end=(it.start&&totalDays>0)?dshift(it.start,Math.round(totalDays)):null;
-  return{perG:perG,per100g:perG*100,perDay:perDay,perMonth:perDay*30,perYear:perDay*365,
-    totalDays:totalDays,used:used,left:left,end:end,prog:totalDays>0?Math.min(used/totalDays,1):0};
-}
-function valueOf(it){
-  var price=num(it.price),w=num(it.weight),p=num(it.p100),k=num(it.k100),r={};
-  if(p>0&&w>0)r.perP=price/(w/100*p);
-  if(k>0&&w>0)r.perK=price/(w/100*k)*100;
-  return r;
-}
-function vCost(){
-  var tm=0,td=0;
-  DB.costs.forEach(function(i){var c=costCalc(i);tm+=c.perMonth;td+=c.perDay;});
-  var o=[];
-  o.push('<div class="h1">伙食花费<small>'+DB.costs.length+' 个商品</small></div>');
-  o.push('<div class="card" style="text-align:center;padding:22px 16px">');
-  o.push('<div class="caps">每月预计总花费</div>');
-  o.push('<div class="big" style="margin:6px 0 16px">¥'+r2(tm)+'</div>');
-  o.push('<div style="display:flex;border-top:.5px solid var(--sep);padding-top:14px">');
-  o.push('<div style="flex:1"><div class="caps">每天</div><div class="mid" style="font-size:16px;margin-top:3px">¥'+r2(td)+'</div></div>');
-  o.push('<div style="width:.5px;background:var(--sep)"></div>');
-  o.push('<div style="flex:1"><div class="caps">每年</div><div class="mid" style="font-size:16px;margin-top:3px">¥'+Math.round(td*365)+'</div></div>');
-  o.push('</div></div>');
-  if(DB.costs.length){
-    o.push('<div class="h2">我的商品</div>');
-    DB.costs.forEach(function(it){
-      var c=costCalc(it),v=valueOf(it);
-      o.push('<div class="card ck" data-act="editCost" data-id="'+it.id+'" style="padding:15px 16px">');
-      o.push('<div class="between"><span class="mid" style="font-size:17px">'+esc(it.n)+'</span>'+
-        '<span class="mid" style="font-size:17px;color:var(--orange)">¥'+r2(c.perMonth)+
-        '<span class="gray" style="font-size:12px;font-weight:400">/月</span></span></div>');
-      o.push('<div class="s" style="margin-top:4px">'+num(it.weight)+'g · ¥'+num(it.price)+
-        ' · 每天'+num(it.daily)+'g'+(num(it.packs)>0?' · '+num(it.packs)+'包':'')+'</div>');
-      if(c.totalDays>0&&it.start){
-        o.push('<div style="margin-top:12px">'+bar(c.used,c.totalDays,'var(--blue)',6)+'</div>');
-        var warn=c.left<=3;
-        o.push('<div style="margin-top:7px;font-size:13px;color:'+(warn?'var(--red)':'var(--sec)')+'">'+
-          '还剩 <b>'+Math.round(c.left)+'</b> 天'+(c.end?' · 约 '+dfmt(c.end)+' 吃完':'')+'</div>');
-      }
-      if(v.perP||v.perK){
-        var t=[];
-        if(v.perP)t.push('每克蛋白 ¥'+r2(v.perP));
-        if(v.perK)t.push('每100千卡 ¥'+r2(v.perK));
-        o.push('<div style="margin-top:9px;display:flex;gap:6px;flex-wrap:wrap">'+
-          t.map(function(x){return '<span style="background:var(--bg);border-radius:8px;padding:3px 9px;font-size:12px;color:var(--sec)">'+x+'</span>';}).join('')+'</div>');
-      }
-      o.push('</div>');
-    });
-    var rank=DB.costs.map(function(it){var v=valueOf(it);return v.perP?{n:it.n,v:v.perP}:null;})
-      .filter(Boolean).sort(function(a,b){return a.v-b.v;});
-    if(rank.length>=2){
-      o.push('<div class="h2">性价比排行 · 每克蛋白质</div><div class="card pl">');
-      rank.forEach(function(x,i){
-        o.push('<div class="row"><span class="g"><span class="t">'+(i+1)+'. '+esc(x.n)+'</span></span>'+
-          '<span class="v mid" style="color:'+(i===0?'var(--green)':'var(--label)')+'">¥'+r2(x.v)+'</span></div>');
-      });
-      o.push('</div><p class="tip">数字越小越划算，用它判断「这东西买贵了没」。</p>');
-    }
-  }else{
-    o.push('<div class="card"><div class="empty">'+ic('wallet',38)+'<b>还没有商品</b><p>点下面添加，比如「坚果 600g 100元」</p></div></div>');
-  }
-  o.push('<button class="btn" data-act="addCost">'+ic('plus',20)+'添加商品</button>');
-  return o.join('');
-}
-var CT=null;
-function openCost(id){
-  if(id){
-    var it=DB.costs.filter(function(x){return x.id===id;})[0];
-    if(!it)return;
-    CT=Object.assign({},it);
-  }else CT={id:null,n:'',price:'',weight:'',packs:'',daily:'',start:dkey(),p100:'',k100:''};
-  drawCost();
-}
-function drawCost(){
-  function calcHTML(){
-    var cc=costCalc(CT),vv=valueOf(CT),s='';
-    s+='<div class="row"><span class="g">每克价格</span><span class="v">¥ '+cc.perG.toFixed(3)+'</span></div>';
-    s+='<div class="row"><span class="g">每 100 克</span><span class="v">¥ '+r2(cc.per100g)+'</span></div>';
-    s+='<div class="row"><span class="g">每天花费</span><span class="v mid" style="color:var(--blue)">¥ '+r2(cc.perDay)+'</span></div>';
-    s+='<div class="row"><span class="g">每月花费</span><span class="v mid" style="color:var(--orange)">¥ '+r2(cc.perMonth)+'</span></div>';
-    s+='<div class="row"><span class="g">每年花费</span><span class="v">¥ '+Math.round(cc.perYear)+'</span></div>';
-    s+='<div class="row"><span class="g">这一份能吃</span><span class="v">'+(cc.totalDays>0?Math.round(cc.totalDays)+' 天':'—')+'</span></div>';
-    if(vv.perP)s+='<div class="row"><span class="g">每克蛋白质</span><span class="v" style="color:var(--green)">¥ '+r2(vv.perP)+'</span></div>';
-    if(vv.perK)s+='<div class="row"><span class="g">每 100 千卡</span><span class="v" style="color:var(--green)">¥ '+r2(vv.perK)+'</span></div>';
-    return s;
-  }
-  sheet({title:CT.id?'编辑商品':'新建商品',save:'保存',onSave:saveCost,
-    disabled:!(num(CT.weight)>0&&num(CT.daily)>0),
-    body:'<div class="h2" style="margin-top:0">商品信息</div><div class="card pl">'+
-      '<div class="field"><label>名称</label><input id="ctn" value="'+esc(CT.n)+'" placeholder="混合坚果" style="width:140px;text-align:right"></div>'+
-      fieldRow('总价格','ctp',CT.price,'元')+fieldRow('总重量','ctw',CT.weight,'克')+
-      fieldRow('分成几包','ctk',CT.packs,'包')+fieldRow('每天吃','ctd',CT.daily,'克')+
-      '<div class="field"><label>开始日期</label><input id="cts" type="date" value="'+esc(CT.start)+'" style="width:150px;text-align:right"></div></div>'+
-      '<div class="h2">营养成分（选填）</div><div class="card pl">'+
-      fieldRow('每100克蛋白质','ctpp',CT.p100,'克')+fieldRow('每100克热量','ctkk',CT.k100,'千卡')+'</div>'+
-      '<p class="tip">填了这两项，才能算「每克蛋白质多少钱」和性价比排行。</p>'+
-      '<div class="h2">计算结果</div><div class="card pl" id="ctcalc">'+calcHTML()+'</div>'+
-      '<p class="tip">举例：600 克 100 元、每天吃 20 克 → 每月约 ¥100。</p>'+
-      (CT.id?'<button class="btn dg" data-act="delCost" style="margin-top:22px">删除这个商品</button>':''),
-    after:function(){
-      function upd(){
-        var box=document.getElementById('ctcalc');
-        if(box)box.innerHTML=calcHTML();
-        canSave(num(CT.weight)>0&&num(CT.daily)>0);
-      }
-      bind('ctn',function(v){CT.n=v;});
-      bind('ctp',function(v){CT.price=v;upd();});
-      bind('ctw',function(v){CT.weight=v;upd();});
-      bind('ctk',function(v){CT.packs=v;});
-      bind('ctd',function(v){CT.daily=v;upd();});
-      bind('ctpp',function(v){CT.p100=v;upd();});
-      bind('ctkk',function(v){CT.k100=v;upd();});
-      var ds=document.getElementById('cts');
-      if(ds)ds.onchange=function(){CT.start=this.value;};
-    }});
-}
-function saveCost(){
-  var w=num(CT.weight),d=num(CT.daily);
-  if(w<=0||d<=0)return;
-  var o={n:(CT.n||'').trim()||'未命名商品',price:num(CT.price),weight:w,daily:d,
-    packs:num(CT.packs),start:CT.start||dkey(),p100:num(CT.p100),k100:num(CT.k100)};
-  if(CT.id)DB.costs=DB.costs.map(function(x){return x.id===CT.id?Object.assign({},x,o):x;});
-  else DB.costs.unshift(Object.assign({id:uid('i')},o));
-  save();closeSheet();paint(cur);
-}
-function delCost(){
-  if(!CT.id)return;
-  if(!confirm('删除「'+CT.n+'」？'))return;
-  DB.costs=DB.costs.filter(function(x){return x.id!==CT.id;});
-  save();closeSheet();paint(cur);
-}  
-function vWeight(){
-  var L=DB.weights.slice().sort(function(a,b){return a.date<b.date?-1:1;});
-  var last=L[L.length-1],o=[];
-  o.push('<div class="h1">体重<small>'+L.length+' 条记录</small></div>');
-  if(!last){
-    o.push('<div class="card"><div class="empty">'+ic('weight',38)+'<b>还没有记录</b><p>点下面按钮记录第一笔</p></div></div>');
-    o.push('<button class="btn" data-act="addKg">'+ic('plus',20)+'记录体重</button>');
-    return o.join('');
-  }
-  var h=num(DB.goals.height),bmi=h>0?last.v/Math.pow(h/100,2):0;
-  var lv=bmi<18.5?['偏瘦','var(--blue)']:bmi<24?['正常','var(--green)']:bmi<28?['偏胖','var(--orange)']:['肥胖','var(--red)'];
-  o.push('<div class="card" style="text-align:center;padding:22px 16px">');
-  o.push('<div class="caps">当前体重</div>');
-  o.push('<div style="margin:4px 0"><span class="big" style="display:inline">'+r1(last.v)+'</span>'+
-    '<span class="gray" style="font-size:18px;margin-left:6px">公斤</span></div>');
-  o.push('<div class="s">'+dfmt(last.date)+' 记录</div>');
-  if(bmi>0)o.push('<div style="margin-top:14px">BMI '+r1(bmi)+
-    ' <span style="background:'+lv[1]+';color:#fff;border-radius:9px;padding:2px 9px;font-size:12px;font-weight:600">'+lv[0]+'</span></div>');
-  else o.push('<div class="tip">去「设置」填入身高，就能显示 BMI</div>');
-  o.push('</div>');
-  o.push('<div class="h2">7 天对比</div>');
-  var ref=dshift(last.date,-7),past=null;
-  for(var i=L.length-1;i>=0;i--){if(L[i].date<=ref){past=L[i];break;}}
-  if(!past){
-    o.push('<div class="card" style="background:#E1EEF4"><div class="mid" style="color:var(--blue)">再记录几天</div>'+
-      '<p class="tip" style="margin-top:6px">满 7 天后，这里会自动和之前对比并给出反馈。</p></div>');
-  }else{
-    var d=last.v-past.v;
-    var fb=d<=-0.3?['↓','var(--green)','下降了 '+Math.abs(r1(d))+' 公斤，方向是对的，继续保持']
-      :d<=0.3?['→','var(--blue)','基本保持稳定，维持得不错']
-      :d<=1?['↗','var(--orange)','小幅上升 '+r1(d)+' 公斤，留意一下最近的饮食']
-      :['↑','var(--red)','上升 '+r1(d)+' 公斤，建议复盘近期摄入'];
-    o.push('<div class="card"><div style="display:flex;align-items:center">');
-    o.push('<div style="flex:1"><div class="s">'+dfmt(past.date)+'</div><div class="mid" style="font-size:18px;margin-top:3px">'+r1(past.v)+' kg</div></div>');
-    o.push('<div style="text-align:center;padding:0 8px"><div style="font-size:20px;color:'+fb[1]+'">'+fb[0]+'</div>'+
-      '<div style="font-size:13px;font-weight:700;color:'+fb[1]+'">'+(d>0?'+':'')+r1(d)+' kg</div></div>');
-    o.push('<div style="flex:1;text-align:right"><div class="s">'+dfmt(last.date)+'</div><div class="mid" style="font-size:18px;margin-top:3px">'+r1(last.v)+' kg</div></div>');
-    o.push('</div><div style="margin-top:16px;padding-left:12px;border-left:3px solid '+fb[1]+'">'+fb[2]+'</div></div>');
-  }
-  if(L.length>=2){
-    var S=L.slice(-8),vs=S.map(function(x){return x.v;});
-    var mx=Math.max.apply(null,vs),mn=Math.min.apply(null,vs),sp=mx-mn;
-    o.push('<div class="h2">近期趋势</div><div class="card"><div style="display:flex;align-items:flex-end;gap:6px;height:118px">');
-    S.forEach(function(w){
-      var rt=sp>0.2?(w.v-mn)/sp:0.5,bh=15+rt*65;
-      o.push('<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end">'+
-        '<span style="font-size:10px;color:var(--sec);margin-bottom:4px">'+r1(w.v)+'</span>'+
-        '<div style="width:100%;max-width:24px;height:'+bh+'px;background:var(--blue);border-radius:5px"></div>'+
-        '<span style="font-size:10px;color:var(--ter);margin-top:6px">'+dparse(w.date).getDate()+'</span></div>');
-    });
-    o.push('</div></div>');
-  }
-  o.push('<div class="h2">历史记录</div><div class="card pl">');
-  L.slice().reverse().forEach(function(w,i,a){
-    var pv=a[i+1],dd=pv?w.v-pv.v:0;
-    o.push('<div class="row ck" data-act="editKg" data-id="'+w.id+'"><div class="g">'+
-      '<div class="t">'+dfmt(w.date)+'</div><div class="s">'+(pv?'较上次 '+(dd>0?'+':'')+r1(dd)+' kg':'首次记录')+'</div></div>'+
-      '<div class="v mid" style="color:var(--label)">'+r1(w.v)+'<span class="gray" style="font-size:12px"> kg</span></div></div>');
-  });
-  o.push('</div><button class="btn" data-act="addKg" style="margin-top:6px">'+ic('plus',20)+'记录体重</button>');
-  return o.join('');
-}
-var KG=null;
-function openKg(id){
-  if(id){
-    var w=DB.weights.filter(function(x){return x.id===id;})[0];
-    if(!w)return;
-    KG={id:id,date:w.date,v:w.v};
-  }else KG={id:null,date:dkey(),v:''};
-  drawKg();
-}
-function drawKg(){
-  var locked=!!KG.id;
-  sheet({title:KG.id?'修改体重':'记录体重',save:'保存',onSave:saveKg,disabled:!(num(KG.v)>0),
-    body:'<div class="card pl">'+
-      '<div class="field"><label>日期</label><input id="kgd" type="date" value="'+KG.date+'"'+(locked?' disabled':'')+
-      ' style="width:150px;text-align:right'+(locked?';opacity:.5':'')+'"></div>'+
-      '<div class="field"><label>体重</label><input id="kgv" type="number" inputmode="decimal" value="'+esc(KG.v)+'" placeholder="0.0"><span class="u">公斤</span></div></div>'+
-      '<p class="tip">建议每天起床后、空腹、排便后称重，条件一致数据才准。</p>'+
-      (KG.id?'<button class="btn dg" data-act="delKg" style="margin-top:22px">删除这条记录</button>':''),
-    after:function(){
-      var dEl=document.getElementById('kgd'),vEl=document.getElementById('kgv');
-      if(dEl&&!locked)dEl.onchange=function(){KG.date=this.value;};
-      if(vEl)vEl.oninput=function(){KG.v=this.value;canSave(num(this.value)>0&&num(this.value)<400);};
-    }});
-}
-function saveKg(){
-  var v=num(KG.v);
-  if(v<=0||v>400){alert('请输入 0 到 400 之间的体重');return;}
-  var ex=DB.weights.filter(function(w){return w.date===KG.date;})[0];
-  if(ex)ex.v=r1(v);
-  else DB.weights.push({id:uid('w'),date:KG.date,v:r1(v)});
-  save();closeSheet();paint(cur);
-}
-function delKg(){
-  if(!KG.id)return;
-  if(!confirm('删除这条记录？'))return;
-  DB.weights=DB.weights.filter(function(w){return w.id!==KG.id;});
-  save();closeSheet();paint(cur);
-}
-
-var GOALMAP={sg_k:'kcal',sg_p:'p',sg_c:'c',sg_f:'f',sg_h:'height',sg_t:'target'};
-var PLANMAP={pl_age:'age',pl_h:'height',pl_w:'weight',pl_min:'trainMin',pl_wk:'weeks',pl_fl:'floor'};
-function sNum(id,label,val,unit,fn){
-  return '<div class="field"><label>'+label+'</label>'+
-    '<input id="'+id+'" type="number" inputmode="decimal" value="'+esc(val===0||val?val:'')+'"'+
-    ' oninput="'+fn+'(\''+id+'\',this.value)"><span class="u">'+unit+'</span></div>';
-}
-function sDate(id,label,val){
-  return '<div class="field"><label>'+label+'</label>'+
-    '<input id="'+id+'" type="date" value="'+esc(val)+'" style="width:150px;text-align:right" onchange="setPlanDate(this.value)"></div>';
-}
-function setGoal(id,v){var k=GOALMAP[id];if(!k)return;DB.goals[k]=num(v);save();touchToday();}
-function setPlan(id,v){var k=PLANMAP[id];if(!k)return;DB.plan[k]=num(v);save();updPlan();touchToday();}
-function setPlanDate(v){DB.plan.start=v;save();updPlan();touchToday();}
-function setSex(v){DB.plan.gender=v;save();paint(cur);touchToday();}
-function setCoef(v){DB.plan.coef=num(v);save();paint(cur);touchToday();}
-function togglePlan(){DB.plan.on=!DB.plan.on;save();paint(cur);touchToday();}
-function doReset(){
-  DB=blank();save();todayDate=dkey();
-  for(var i=0;i<5;i++)paint(i);
-}
-var tmr=null;
-function touchToday(){clearTimeout(tmr);tmr=setTimeout(function(){if(cur!==0)paint(0);},260);}
-
-function planOutHTML(p){
-  var c=computePlan(p);
-  return '<div class="card pl">'+
-    '<div class="row"><span class="g">基础代谢</span><span class="v mid">'+Math.round(c.bmr)+' 千卡</span></div>'+
-    '<div class="row"><span class="g">起始热量</span><span class="v mid">'+Math.round(c.cals)+' 千卡</span></div>'+
-    '<div class="row"><span class="g">碳水目标</span><span class="v mid" style="color:var(--green)">'+c.carbs+' 克</span></div>'+
-    '<div class="row"><span class="g">蛋白质</span><span class="v mid" style="color:var(--blue)">'+c.protein+' 克</span></div>'+
-    '<div class="row"><span class="g">脂肪</span><span class="v mid" style="color:var(--purple)">'+c.fat+' 克</span></div></div>';
-}
-function scheduleHTML(p){
-  var sch=buildSchedule(p),s='<div class="card pl">';
-  sch.forEach(function(w){
-    var col='var(--label)';
-    if(w.status==='done')col='var(--sec)';
-    if(w.status==='now')col='var(--blue)';
-    var act='';
-    if(w.action==='keep')act='保持';
-    else if(w.action==='hold')act='保持（掉太快）';
-    else if(w.action==='cut')act='−20g';
-    var wl='';
-    if(w.drop!=null)wl='<div class="s">体重 '+r1(w.w1)+'kg · 变化 '+(w.drop>=0?'−':'+')+Math.abs(w.drop).toFixed(1)+'%</div>';
-    s+='<div class="row"'+(w.status==='now'?' style="background:#E1EEF4"':'')+'>'+
-      '<div class="g"><div class="t" style="color:'+col+'">第 '+w.week+' 周'+(w.status==='now'?' · 本周':'')+'</div>'+
-      '<div class="s">'+dfmt(w.start)+' – '+dfmt(w.end)+'</div>'+wl+'</div>'+
-      '<div style="text-align:right;flex:0 0 auto"><div class="mid" style="font-size:17px;color:'+col+'">'+w.carb+
-      '<span class="gray" style="font-size:12px"> g</span></div>'+(act?'<div class="s">'+act+'</div>':'')+'</div></div>';
-  });
-  return s+'</div>';
-}
-function updPlan(){
-  var p=DB.plan;if(!p)return;
-  var a=document.getElementById('planout');if(a)a.innerHTML=planOutHTML(p);
-  var b=document.getElementById('plantable');if(b)b.innerHTML=scheduleHTML(p);
-}
-function vSet(){
-  if(!DB.plan){DB.plan=defaultPlan();save();}
-  var g=DB.goals,p=DB.plan;
-  var own=DB.foods.filter(function(f){return f.own;}).length,o=[];
-  o.push('<div class="h1">设置</div>');
-  o.push('<div class="h2">每日目标</div><div class="card pl">'+
-    sNum('sg_k','热量',g.kcal,'千卡','setGoal')+sNum('sg_p','蛋白质',g.p,'克','setGoal')+
-    sNum('sg_c','碳水',g.c,'克','setGoal')+sNum('sg_f','脂肪',g.f,'克','setGoal')+'</div>');
-  o.push('<p class="tip">开启下面的碳水计划后，今日页会自动改用计划里的目标。</p>');
-  o.push('<div class="h2">碳水渐降计划</div>');
-  o.push('<div class="card pl"><div class="row"><div class="g">'+
-    '<div class="t">启用计划</div><div class="s">开启后，今日页碳水目标自动跟随本周</div></div>'+
-    '<button class="btn sm '+(p.on?'':'sec')+'" data-act="togglePlan">'+(p.on?'已开启':'已关闭')+'</button></div></div>');
-  var zero=num(p.trainMin)===0;
-  o.push('<div class="card pl">'+
-    '<div class="field"><label>性别</label><div style="display:flex;gap:6px;flex:0 0 auto">'+
-      '<button class="btn sm '+(p.gender==='f'?'':'sec')+'" data-act="setSex" data-v="f">女</button>'+
-      '<button class="btn sm '+(p.gender==='m'?'':'sec')+'" data-act="setSex" data-v="m">男</button>'+
-    '</div></div>'+
-    sNum('pl_age','年龄',p.age,'岁','setPlan')+
-    sNum('pl_h','身高',p.height,'厘米','setPlan')+
-    sNum('pl_w','体重',p.weight,'公斤','setPlan')+
-    sNum('pl_min','训练分钟',p.trainMin,'分','setPlan')+
-    '<div class="field" style="'+(zero?'opacity:.42;flex-wrap:wrap':'')+'"><label>训练系数</label>'+
-      '<div style="display:flex;gap:6px;flex:0 0 auto;'+(zero?'pointer-events:none':'')+'">'+
-        [['5','新手'],['8','普通'],['10','高强']].map(function(x){
-          return '<button class="btn sm '+(num(p.coef)===num(x[0])?'':'sec')+
-            '" data-act="setCoef" data-v="'+x[0]+'">'+x[0]+'</button>';
-        }).join('')+
-      '</div>'+
-      (zero?'<div style="flex:0 0 100%;font-size:12px;color:var(--sec);text-align:right;padding-top:5px">不运动 · 无需设置</div>':'')+
-    '</div>'+
-    sDate('pl_start','开始日期',p.start)+
-    sNum('pl_wk','持续周数',p.weeks,'周','setPlan')+
-    sNum('pl_fl','碳水下限',p.floor,'克','setPlan')+
-  '</div>');
-  o.push('<div class="h2" style="margin-top:0">自动计算（5:3:2 配比）</div>');
-  o.push('<div id="planout">'+planOutHTML(p)+'</div>');
-  o.push('<div class="h2">时间表</div>');
-  o.push('<div id="plantable">'+scheduleHTML(p)+'</div>');
-  o.push('<p class="tip">每周称重一次，系统自动判断：降 0.5%～1% 保持 · 没达标减 20g 碳水 · 降太快保持当前。</p>');
-  o.push('<div class="h2">个人信息</div><div class="card pl">'+
-    sNum('sg_h','身高',g.height,'厘米','setGoal')+sNum('sg_t','目标体重',g.target,'公斤','setGoal')+'</div>');
-  o.push('<p class="tip">填了身高，「体重」页会显示 BMI 和体型评价。</p>');
-  o.push('<div class="h2">数据概览</div><div class="card pl">'+
-    '<div class="row"><span class="g">食物库</span><span class="v">'+DB.foods.length+' 种 · 自定义 '+own+'</span></div>'+
-    '<div class="row"><span class="g">饮食记录</span><span class="v">'+DB.log.length+' 条</span></div>'+
-    '<div class="row"><span class="g">体重记录</span><span class="v">'+DB.weights.length+' 条</span></div>'+
-    '<div class="row"><span class="g">商品</span><span class="v">'+DB.costs.length+' 个</span></div></div>');
-  o.push('<div class="h2">数据管理</div><div class="card pl">'+
-    '<div class="row ck" data-act="openExport"><div class="g"><div class="t">导出数据</div>'+
-      '<div class="s">复制到备忘录，换手机时用</div></div><div class="ar">'+ic('chev',18)+'</div></div>'+
-    '<div class="row ck" data-act="openImport"><div class="g"><div class="t">导入数据</div>'+
-      '<div class="s">粘贴之前导出的内容恢复</div></div><div class="ar">'+ic('chev',18)+'</div></div>'+
-    '<div class="row ck" data-act="askReset"><div class="g">'+
-      '<div class="t" style="color:var(--red)">清空所有数据</div>'+
-      '<div class="s">恢复初始状态，无法撤销</div></div><div class="ar">'+ic('chev',18)+'</div></div></div>');
-  o.push('<div class="h2">关于</div><div class="card pl">'+
-    '<div class="row"><span class="g">版本</span><span class="v">1.0.0</span></div>'+
-    '<div class="row"><span class="g">数据存储</span><span class="v">仅保存在本机</span></div>'+
-    '<div class="row"><span class="g">每月按</span><span class="v">30 天计算</span></div></div>');
-  o.push('<p style="font-size:12px;color:var(--ter);text-align:center;margin:24px 0 0">记录是自律的开始 ♥</p>');
-  return o.join('');
-}
-
-function openExport(){
-  var txt=JSON.stringify(DB);
-  sheet({title:'导出数据',left:'关闭',onLeft:closeSheet,
-    body:'<p class="tip" style="margin-top:0">点下面按钮复制，然后新建一条备忘录粘进去保存。换手机或数据丢了时，用「导入数据」恢复。</p>'+
-      '<div class="card" style="padding:10px"><textarea id="exp" readonly style="width:100%;height:200px;border:none;background:none;font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.5;resize:none">'+
-      esc(txt)+'</textarea></div>'+
-      '<button class="btn" data-act="copyExp">复制全部</button>',
-    after:function(){var t=document.getElementById('exp');if(t)t.onclick=function(){this.select();};}});
-}
-function copyExp(){
-  var t=document.getElementById('exp');if(!t)return;
-  t.removeAttribute('readonly');t.select();t.setSelectionRange(0,999999);
-  var ok=false;
-  try{ok=document.execCommand('copy');}catch(e){}
-  if(!ok&&navigator.clipboard){navigator.clipboard.writeText(t.value);ok=true;}
-  t.setAttribute('readonly','readonly');
-  alert(ok?'已复制，去备忘录粘贴保存':'请长按框内文字，手动全选复制');
-}
-function openImport(){
-  sheet({title:'导入数据',left:'关闭',onLeft:closeSheet,
-    body:'<p class="tip" style="margin-top:0">把之前导出的整段内容粘贴到下面，然后点导入。</p>'+
-      '<div class="card" style="padding:10px"><textarea id="imp" placeholder="在这里粘贴数据…" style="width:100%;height:200px;border:none;background:none;font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.5;resize:none"></textarea></div>'+
-      '<button class="btn" data-act="doImport">导入</button>'+
-      '<p class="tip" style="color:var(--red)">导入会覆盖当前所有数据。</p>'});
-}
-function doImport(){
-  var t=document.getElementById('imp');if(!t)return;
-  var d;
-  try{d=JSON.parse(t.value.trim());}
-  catch(e){alert('数据格式不对，请检查是否复制完整');return;}
-  if(!d||!d.foods){alert('这不像是本 App 的数据');return;}
-  DB=d;
-  ['goals','foods','log','costs','weights'].forEach(function(k){if(!DB[k])DB[k]=blank()[k];});
-  save();closeSheet();todayDate=dkey();
-  for(var i=0;i<5;i++)paint(i);
-  alert('导入成功');
-}
-function askReset(){
-  if(!confirm('确定清空所有数据吗？此操作无法撤销。'))return;
-  doReset();
-}
-
-var ACT={
-  nav:function(d){
-    var n=+d.n;
-    if(n===1&&todayDate===dkey())return;
-    todayDate=n===0?dkey():dshift(todayDate,n);
-    paint(0);
-  },
-  addLog:function(){openLog(null);},
-  editLog:function(d){openLog(d.id);},
-  lgPick:function(d){LG.step='amt';LG.food=DB.foods.filter(function(f){return f.id===d.id;})[0];LG.grams=100;drawLog();},
-  lgG:function(d){LG.grams=d.v;drawLog();},
-  lgDel:delLog,
-  addFood:function(){openFood(null);},
-  editFood:function(d){openFood(d.id);},
-  delFood:delFood,
-  addCost:function(){openCost(null);},
-  editCost:function(d){openCost(d.id);},
-  delCost:delCost,
-  addKg:function(){openKg(null);},
-  editKg:function(d){openKg(d.id);},
-  delKg:delKg,
-  togglePlan:togglePlan,
-  setSex:function(d){setSex(d.v);},
-  setCoef:function(d){setCoef(d.v);},
-  openExport:openExport,
-  copyExp:copyExp,
-  openImport:openImport,
-  doImport:doImport,
-  askReset:askReset
-};
-
-var VIEWS={today:vToday,foods:vFoods,cost:vCost,weight:vWeight,set:vSet};
-
-function placeholderHTML(i){
-  return '<div class="h1">'+TABS[i].n+'<small>正在加载…</small></div>'+
-    '<div class="card"><div class="empty">'+ic('bowl',38)+'<b>第 '+(i+1)+' 页</b></div></div>';
-}
-function paint(i){
-  var el=pageEls[i];
-  var fn=VIEWS[TABS[i].k];
-  var top=el.scrollTop;
-  el.innerHTML=fn?fn():placeholderHTML(i);
-  el.scrollTop=top;
-}
-
-document.getElementById('pages').addEventListener('click',function(e){
-  var t=e.target.closest('[data-act]');
-  if(!t)return;
-  var fn=ACT[t.dataset.act];
-  if(fn){e.preventDefault();fn(t.dataset,t,e);}
-});
-sbd.addEventListener('click',function(e){
-  var t=e.target.closest('[data-act]');
-  if(!t)return;
-  var fn=ACT[t.dataset.act];
-  if(fn){e.preventDefault();fn(t.dataset,t,e);}
-});
-
-for(var _i=0;_i<5;_i++)paint(_i);
+renderMeal();
 </script>
 </body>
-</html>  
+</html>
