@@ -1,57 +1,102 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>图标</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F2F1F5;font:15px/1.7 -apple-system,"PingFang SC",sans-serif;color:#30325E;padding:24px;box-sizing:border-box;text-align:center}
-#pic{width:230px;height:230px;border-radius:52px;display:block;box-shadow:0 14px 44px rgba(48,50,94,.18);background:#fff}
-.tip{color:#8A8A99;font-size:13.5px;margin-top:26px;max-width:280px}
-.tip b{color:#30325E}
-a{display:inline-block;margin-top:22px;padding:13px 30px;background:#5D6BA8;color:#fff;border-radius:14px;text-decoration:none;font-weight:600;font-size:15px}
+body{margin:0;padding:44px 20px;background:#EDEAEB;
+font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}
+img{width:224px;height:224px;display:block;filter:drop-shadow(0 14px 30px rgba(150,120,130,.16))}
+h2{color:#A8929C;font-size:16px;font-weight:600;margin:34px 0 8px}
+p{color:#9A9A9F;font-size:13px;margin:0}
 </style>
 </head>
 <body>
-<img id="pic" alt="icon">
-<div class="tip"><b>长按上面的图标</b><br>选「存储到照片」</div>
-<a id="dl">长按没反应？点这里</a>
+<img id="ico">
+<h2>长按 → 存储到「照片」</h2>
+<p>然后上传到 GitHub</p>
+<canvas id="cv" style="display:none"></canvas>
 <script>
-var S=1024,c=S/2,cv=document.createElement('canvas'),g;
-cv.width=cv.height=S;g=cv.getContext('2d');
-var bg=g.createLinearGradient(0,0,S,S);
-bg.addColorStop(0,'#FFFFFF');bg.addColorStop(.58,'#FFFFFF');bg.addColorStop(1,'#FBEDF2');
-g.fillStyle=bg;g.fillRect(0,0,S,S);
-var h1=g.createRadialGradient(S*.26,S*.20,0,S*.26,S*.20,S*.74);
-h1.addColorStop(0,'rgba(245,205,214,.36)');h1.addColorStop(1,'rgba(245,205,214,0)');
-g.fillStyle=h1;g.fillRect(0,0,S,S);
-var RIM=612,RW=290;
+(function(){
+var S=1024,cv=document.getElementById('cv');cv.width=cv.height=S;
+var g=cv.getContext('2d');
+
+function shape(){
+  var r=S*0.2237,k=0.5523;
+  g.beginPath();g.moveTo(r,0);g.lineTo(S-r,0);
+  g.bezierCurveTo(S-r+r*k,0,S,r-r*k,S,r);
+  g.lineTo(S,S-r);
+  g.bezierCurveTo(S,S-r+r*k,S-r+r*k,S,S-r,S);
+  g.lineTo(r,S);
+  g.bezierCurveTo(r-r*k,S,0,S-r+r*k,0,S-r);
+  g.lineTo(0,r);
+  g.bezierCurveTo(0,r-r*k,r-r*k,0,r,0);
+  g.closePath();
+}
+
 g.save();
-g.beginPath();g.moveTo(c-RW,RIM);g.arc(c,RIM,RW,0,Math.PI,false);g.closePath();
-var bw=g.createLinearGradient(0,RIM,0,RIM+RW);
-bw.addColorStop(0,'#F0F0F3');bw.addColorStop(.45,'#E5E5EA');bw.addColorStop(1,'#D5D5DC');
-g.fillStyle=bw;g.shadowColor='rgba(48,50,94,.10)';g.shadowBlur=46;g.shadowOffsetY=18;g.fill();
+
+/* ===== 背景：白 → 淡粉 ===== */
+var bg=g.createLinearGradient(S*.1,0,S*.9,S);
+bg.addColorStop(0,'#FFFFFF');
+bg.addColorStop(.5,'#FEFBFC');
+bg.addColorStop(1,'#FAF2F4');
+g.fillStyle=bg;
+g.fillRect(0,0,S,S);
+
+var gl=g.createRadialGradient(S*.85,S*.88,0,S*.85,S*.88,S*.75);
+gl.addColorStop(0,'rgba(248,228,233,.42)');
+gl.addColorStop(1,'rgba(248,228,233,0)');
+g.fillStyle=gl;
+g.fillRect(0,0,S,S);
+
+/* ===== 碗：浅灰 ===== */
+var bcx=S*.5,bcy=S*.618,brx=S*.295,bry=S*.250,bw=S*.068;
+
+var wg=g.createLinearGradient(bcx-brx,0,bcx+brx,0);
+wg.addColorStop(0,'#BFBFC7');
+wg.addColorStop(.5,'#D4D4DA');
+wg.addColorStop(1,'#BFBFC7');
+g.strokeStyle=wg;
+g.lineWidth=bw;
+g.lineCap='round';
+g.beginPath();g.ellipse(bcx,bcy,brx,bry,0,0,Math.PI);g.stroke();
+
+/* ===== 圆点：米黄渐变 ===== */
+var dcx=S*.5,dcy=S*.342,dr=S*.112;
+
+var halo=g.createRadialGradient(dcx,dcy,dr*.86,dcx,dcy,dr*1.14);
+halo.addColorStop(0,'rgba(214,208,190,.28)');
+halo.addColorStop(.6,'rgba(214,208,190,.1)');
+halo.addColorStop(1,'rgba(214,208,190,0)');
+g.fillStyle=halo;
+g.beginPath();g.arc(dcx,dcy,dr*1.14,0,Math.PI*2);g.fill();
+
+var dg=g.createRadialGradient(
+  dcx-dr*.2, dcy-dr*.22, dr*.1,
+  dcx, dcy, dr
+);
+dg.addColorStop(0,'#FDFBF4');
+dg.addColorStop(.5,'#F9F5E8');
+dg.addColorStop(.82,'#F2EBD6');
+dg.addColorStop(1,'#E5DDC2');
+g.fillStyle=dg;
+g.beginPath();g.arc(dcx,dcy,dr,0,Math.PI*2);g.fill();
+
+/* 磨砂颗粒 */
+try{
+  var id=g.getImageData(0,0,S,S),d=id.data;
+  for(var i=0;i<d.length;i+=4){
+    var n=(Math.random()-.5)*13;
+    d[i]+=n;d[i+1]+=n;d[i+2]+=n;
+  }
+  g.putImageData(id,0,0);
+}catch(e){}
+
 g.restore();
-g.beginPath();g.moveTo(c-RW+20,RIM+3);g.arc(c,RIM,RW-20,0,Math.PI,false);g.lineTo(c+RW-20,RIM+3);g.closePath();
-var inn=g.createLinearGradient(0,RIM,0,RIM+RW*.55);
-inn.addColorStop(0,'rgba(255,255,255,.92)');inn.addColorStop(.6,'rgba(255,255,255,.30)');inn.addColorStop(1,'rgba(255,255,255,0)');
-g.fillStyle=inn;g.fill();
-g.beginPath();g.moveTo(c-RW,RIM);g.lineTo(c+RW,RIM);
-g.strokeStyle='rgba(255,255,255,.94)';g.lineWidth=7;g.lineCap='round';g.stroke();
-var DY=RIM-44,DR=168;
-var h2=g.createRadialGradient(c,DY,DR*.5,c,DY,DR*2);
-h2.addColorStop(0,'rgba(238,214,164,.60)');h2.addColorStop(.42,'rgba(238,214,164,.20)');h2.addColorStop(1,'rgba(238,214,164,0)');
-g.fillStyle=h2;g.beginPath();g.arc(c,DY,DR*2,0,Math.PI*2);g.fill();
-var dt=g.createRadialGradient(c-DR*.34,DY-DR*.40,DR*.05,c,DY,DR*1.02);
-dt.addColorStop(0,'#FFFEFB');dt.addColorStop(.30,'#FBF2DC');dt.addColorStop(.68,'#F3DEB2');dt.addColorStop(1,'#E7CC94');
-g.save();g.shadowColor='rgba(196,166,112,.28)';g.shadowBlur=40;g.shadowOffsetY=14;
-g.fillStyle=dt;g.beginPath();g.arc(c,DY,DR,0,Math.PI*2);g.fill();g.restore();
-g.beginPath();g.arc(c,DY,DR-1,0,Math.PI*2);
-g.strokeStyle='rgba(231,204,148,.55)';g.lineWidth=2.5;g.stroke();
-g.beginPath();g.arc(c,DY,DR*.76,Math.PI*1.10,Math.PI*1.74);
-g.strokeStyle='rgba(255,255,255,.82)';g.lineWidth=DR*.10;g.lineCap='round';g.stroke();
-document.getElementById('pic').src=cv.toDataURL('image/png');
-cv.toBlob(function(b){document.getElementById('dl').href=URL.createObjectURL(b)});
+document.getElementById('ico').src=cv.toDataURL('image/png');
+})();
 </script>
 </body>
 </html>
