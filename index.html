@@ -87,6 +87,38 @@ button,input{font:inherit;-webkit-appearance:none;appearance:none;outline:none;b
 .sum>div{flex:1;background:var(--card);border-radius:var(--r);padding:16px}
 .sum .k{font-size:12px;color:var(--sec)}
 .sum .v{font-size:22px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+  
+/* ===== 动效 ===== */
+@keyframes popIn{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+@keyframes riseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes barGrow{from{width:0}}
+@keyframes sweep{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
+@keyframes tickIn{0%{transform:scale(.3);opacity:0}55%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.big{animation:popIn .5s cubic-bezier(.22,1,.36,1)}
+
+.bar>i{position:relative;overflow:hidden;animation:barGrow .55s cubic-bezier(.22,1,.36,1)}
+.bar>i::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);
+  animation:sweep .85s .2s cubic-bezier(.22,1,.36,1)}
+
+.list .swipe,#costApp .list>.srow,.item,.sum>div,.card{
+  animation:riseIn .42s cubic-bezier(.22,1,.36,1) both}
+
+.tab.on svg{animation:popIn .32s cubic-bezier(.22,1,.36,1)}
+
+.addbtn,.srow,.chip,.seg button{transition:transform .16s cubic-bezier(.22,1,.36,1)}
+.addbtn:active,.chip:active,.seg button:active{transform:scale(.94)}
+.srow:active{background:rgba(0,0,0,.022)}
+
+.tk{display:flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:50%;background:rgba(255,255,255,.18);
+  animation:tickIn .3s cubic-bezier(.22,1,.36,1)}
+.tk svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round}
+.tk svg path{stroke-dasharray:26;stroke-dashoffset:26;
+  animation:draw .4s .1s cubic-bezier(.22,1,.36,1) forwards}
 </style>
 </head>
 <body>
@@ -128,7 +160,19 @@ if(!Array.isArray(DB.foods)||!DB.foods.length){DB.foods=DEF.map(f=>Object.assign
 if(!DB.target)DB.target={kcal:1400,protein:105,carb:175,fat:31};
 if(!DB.profile)DB.profile={height:160,age:25,sex:'f',act:8,minutes:0};
 
-function toast(m,ms){ms=ms||1500;const e=document.createElement('div');e.textContent=m;e.style.cssText='position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:2000;background:rgba(48,50,94,.92);color:#fff;font-size:14px;padding:11px 20px;border-radius:22px;max-width:80%;text-align:center;pointer-events:none';document.body.appendChild(e);setTimeout(()=>e.style.opacity=0,ms-250);setTimeout(()=>e.remove(),ms)}
+function toast(m,ms){
+  ms = ms || 1600;
+  const e = document.createElement('div');
+  e.innerHTML = '<span class="tk"><svg viewBox="0 0 24 24">'
+    + '<path d="M5 12.5 10 17.5 19 7.5"/></svg></span>' + esc(m);
+  e.style.cssText = 'position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:2000;'
+    + 'display:flex;align-items:center;gap:9px;background:rgba(48,50,94,.92);color:#fff;'
+    + 'font-size:14px;padding:10px 18px 10px 12px;border-radius:22px;max-width:80%;'
+    + 'pointer-events:none;animation:riseIn .28s cubic-bezier(.22,1,.36,1)';
+  document.body.appendChild(e);
+  setTimeout(() => { e.style.transition = 'opacity .25s'; e.style.opacity = '0'; }, ms - 250);
+  setTimeout(() => e.remove(), ms);
+}
 function sheet(html){const m=document.createElement('div');m.className='mask';m.innerHTML='<div class="sheet">'+html+'</div>';document.body.appendChild(m);const close=()=>m.remove();m.onclick=e=>{if(e.target===m)close()};$$('[data-close]',m).forEach(b=>b.onclick=close);return{el:m,close,q:s=>m.querySelector(s),qa:s=>$$(s,m)}}
 function dlg(html){const m=document.createElement('div');m.className='mask center';m.innerHTML='<div class="dlg">'+html+'</div>';document.body.appendChild(m);const close=()=>m.remove();m.onclick=e=>{if(e.target===m)close()};$$('[data-close]',m).forEach(b=>b.onclick=close);return{el:m,close,q:s=>m.querySelector(s)}}
 function swipe(el){let x0=0,y0=0,dx=0,op=false,lk=null;el.addEventListener('touchstart',e=>{if(window.__row&&window.__row!==el)window.__row.style.transform='';x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=0;lk=null;el.style.transition='none'},{passive:true});el.addEventListener('touchmove',e=>{const mx=e.touches[0].clientX-x0,my=e.touches[0].clientY-y0;if(lk===null)lk=Math.abs(mx)>Math.abs(my)+3?'x':'y';if(lk!=='x')return;dx=Math.max(-96,Math.min(0,op?mx-80:mx));el.style.transform='translateX('+dx+'px)'},{passive:true});el.addEventListener('touchend',()=>{el.style.transition='';op=dx<-40;el.style.transform=op?'translateX(-80px)':'';window.__row=op?el:(window.__row===el?null:window.__row)})}
@@ -411,6 +455,44 @@ function impData(){
     s.close();go('meal');toast('导入完成')};
 }
 
+
+/* ===== 动效 JS ===== */
+let __prevK = 0;
+
+function animateBig(){
+  const el = $('#mealApp .big');
+  if(!el || !el.firstChild) return;
+  const node = el.firstChild;
+  const to = parseFloat(node.nodeValue);
+  if(!isFinite(to)) return;
+  const from = __prevK;
+  __prevK = to;
+  if(Math.abs(to - from) < 1) return;
+  const t0 = performance.now(), dur = 550;
+  (function step(now){
+    const p = Math.min(1, (now - t0) / dur);
+    const e = 1 - Math.pow(1 - p, 3);
+    node.nodeValue = String(Math.round(from + (to - from) * e));
+    if(p < 1) requestAnimationFrame(step);
+    else node.nodeValue = String(Math.round(to));
+  })(t0);
+}
+
+function stagger(){
+  $$('.list .swipe, #costApp .list>.srow, .item, .sum>div').forEach((el, i) => {
+    el.style.animationDelay = Math.min(i * 30, 280) + 'ms';
+  });
+}
+
+['renderMeal','renderFood','renderWeight','renderCost','renderSet'].forEach(n => {
+  const f = window[n];
+  if(typeof f !== 'function') return;
+  window[n] = function(){
+    f.apply(this, arguments);
+    requestAnimationFrame(() => { stagger(); if(n === 'renderMeal') animateBig(); });
+  };
+});
+  
 renderMeal();
 </script>
 </body>
