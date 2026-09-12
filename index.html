@@ -442,4 +442,10 @@ function impData(){
     if(Array.isArray(o.weights)){DB.weights=o.weights;LS.s('weights',DB.weights)}
     if(o.target){DB.target=o.target;LS.s('target',DB.target)}
     if(o.profile){DB.profile=o.profile;LS.s('profile',DB.profile)}
-    s.close();go('meal');to
+        s.close();go('meal');toast('导入完成')};
+}
+
+renderMeal();
+</script>
+</body>
+</html>
