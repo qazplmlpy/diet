@@ -193,3 +193,331 @@ function foodEditor(id){
     toast('已删除',2200,undo);
   };
 }
+
+/* ===== 花费 ===== */
+function calc(it){
+  const pg=num(it.packGram),pcn=num(it.packCount)||1,daily=num(it.dailyGram),total=pg*pcn;
+  const isP=it.priceMode==='pack';
+  const batch=isP?((it.packPriceMode==='total')?num(it.priceTotal):num(it.pricePerPack)*pcn):num(it.priceTotal);
+  const unit=total>0?batch/total:0;
+  const base=(it.stockGram===''||it.stockGram==null)?total:num(it.stockGram);
+  const sd=it.stockDate||TODAY();
+  const elapsed=Math.max(0,Math.round((pISO(TODAY())-pISO(sd))/86400000));
+  const stock=Math.max(0,base-daily*elapsed);
+  const perDay=unit*daily;
+  return{pg:pg,pcn:pcn,daily:daily,total:total,batch:batch,perDay:perDay,perMonth:perDay*30,stock:stock,base:base,elapsed:elapsed,daysTotal:daily>0?total/daily:0,daysLeft:daily>0?stock/daily:0};
+}
+function shrink(file,cb){
+  const fr=new FileReader();
+  fr.onload=function(){
+    const im=new Image();
+    im.onload=function(){
+      const M=320;let w=im.width,h=im.height;
+      if(w>h){if(w>M){h=Math.round(h*M/w);w=M}}else{if(h>M){w=Math.round(w*M/h);h=M}}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(im,0,0,w,h);
+      cb(cv.toDataURL('image/jpeg',.72));
+    };
+    im.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+function renderCost(){
+  const b=$('#costApp');if(!b)return;
+  const rows=DB.cost.map(it=>Object.assign({},it,calc(it)));
+  const pd=rows.reduce((s,r)=>s+r.perDay,0);
+  const low=rows.filter(r=>r.daily>0&&r.daysLeft<7).sort((a,c)=>a.daysLeft-c.daysLeft);
+  let h='<div class="sum"><div><div class="k">每天成本</div><div class="v">¥'+pd.toFixed(2)+'</div></div><div><div class="k">每月成本</div><div class="v">¥'+(pd*30).toFixed(0)+'</div></div></div>';
+  if(low.length){
+    h+='<div class="sec">库存倒计时</div>';
+    low.forEach(r=>{
+      h+='<div class="item"><div class="ih"><div class="nm">'+esc(r.name)+'</div><div class="rt" style="color:var(--red)">剩 '+r.daysLeft.toFixed(0)+' 天</div></div>'
+      +'<div class="sub">还剩 <b>'+r.stock.toFixed(0)+'</b> g ｜ 每天 '+r.daily+' g</div>'
+      +'<div class="bar s" style="margin-top:10px"><i style="width:'+Math.max(3,Math.min(100,r.daysLeft/30*100))+'%;background:var(--red)"></i></div></div>';
+    });
+  }
+  h+='<div class="sec">商品（'+DB.cost.length+'）</div>';
+  if(!rows.length){h+='<div class="list"><div class="empty">还没有商品<br>点下面「＋ 添加商品」</div></div>'}
+  else{
+    h+='<div class="list">'+rows.map(r=>{
+      const im=r.photo?'<img src="'+r.photo+'" style="width:54px;height:54px;border-radius:14px;object-fit:cover;flex-shrink:0;background:var(--sep)">':'';
+      return '<div class="srow" data-c="'+r.id+'" style="align-items:flex-start;gap:12px">'+im
+      +'<div class="l"><div class="n">'+esc(r.name)+'</div>'
+      +'<div class="s">'+r.stock.toFixed(0)+'g 剩 ｜ 花了 <b>¥'+r.batch.toFixed(2)+'</b><br>'
+      +'每天 '+r.daily+'g ｜ 还能吃 <b>'+r.daysLeft.toFixed(0)+'</b> 天<br>'
+      +'每月 <b>¥'+r.perMonth.toFixed(0)+'</b></div></div>'
+      +'<div class="r"><div class="k">¥'+r.perDay.toFixed(2)+'</div><div class="g">/天</div></div></div>';
+    }).join('')+'</div>';
+  }
+  h+='<div class="addbtn" id="cadd">＋ 添加商品</div>';
+  b.innerHTML=h;
+  $('#cadd',b).onclick=()=>costEditor(null);
+  $$('[data-c]',b).forEach(e=>e.onclick=()=>costEditor(e.dataset.c));
+  $$('#costApp .list>.srow',b).forEach((e,i)=>e.style.animation='riseIn .42s cubic-bezier(.22,1,.36,1) both '+(Math.min(i*30,280))+'ms');
+}
+function costEditor(id){
+  const ed=id?DB.cost.find(x=>x.id===id):null;
+  const d=ed||{name:'',priceMode:'gram',packPriceMode:'unit',priceTotal:'',pricePerPack:'',packGram:'',packCount:1,dailyGram:'',stockGram:'',photo:''};
+  const fv=v=>(v==null||v==='')?'':v;
+  const isP=d.priceMode==='pack',isPU=d.packPriceMode!=='total';
+  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">'+(ed?'编辑商品':'添加商品')+'</span><span class="s" id="ok">保存</span></div><div class="sb">'
+  +'<div class="f"><label>名称</label><input id="c_name" placeholder="散装面包" value="'+esc(d.name)+'"></div>'
+  +'<div class="f"><label>照片（可留空）</label><div style="display:flex;align-items:center;gap:12px">'
+  +'<img id="c_pv" src="'+(d.photo||'')+'" style="width:64px;height:64px;border-radius:16px;object-fit:cover;background:var(--card);'+(d.photo?'':'display:none')+'">'
+  +'<label style="padding:11px 18px;background:var(--card);border-radius:12px;font-size:14px;color:var(--blue);font-weight:600">选照片<input id="c_ph" type="file" accept="image/*" style="display:none"></label>'
+  +(d.photo?'<button id="c_rm" style="font-size:14px;color:var(--red);padding:10px 4px">移除</button>':'')
+  +'</div></div>'
+  +'<div class="f"><label>怎么算钱</label><div class="seg"><button data-m="gram" class="'+(isP?'':'on')+'">按总价</button><button data-m="pack" class="'+(isP?'on':'')+'">按包</button></div></div>'
+  +'<div class="f" id="gB"'+(isP?' style="display:none"':'')+'><label>花了多少钱（元）</label><input id="c_u" type="number" inputmode="decimal" placeholder="100" value="'+fv(d.priceTotal)+'"></div>'
+  +'<div id="pWrap"'+(isP?'':' style="display:none"')+'>'
+  +'<div class="f"><label>价格怎么填</label><div class="seg"><button data-pm="unit" class="'+(isPU?'on':'')+'">每包价格</button><button data-pm="total" class="'+(isPU?'':'on')+'">一共的总价</button></div></div>'
+  +'<div class="f"><label id="ppl">'+(isPU?'每包多少钱（元）':'一共花了多少钱（元）')+'</label><input id="c_pp" type="number" inputmode="decimal" placeholder="'+(isPU?'15':'100')+'" value="'+fv(isPU?d.pricePerPack:d.priceTotal)+'"></div>'
+  +'</div>'
+  +'<div class="row"><div class="f"><label id="c_pgl">'+(isP?'每包多少克':'一共多少克')+'</label><input id="c_pg" type="number" inputmode="decimal" placeholder="'+(isP?'200':'800')+'" value="'+fv(d.packGram)+'"></div><div class="f" id="box_pc" style="'+(isP?'':'display:none')+'"><label>共几包</label><input id="c_pc" type="number" inputmode="decimal" placeholder="2" value="'+fv(d.packCount)+'"></div></div>'
+  +'<div class="f"><label>每天吃多少克</label><input id="c_d" type="number" inputmode="decimal" placeholder="50" value="'+fv(d.dailyGram)+'"></div>'
+  +'<div class="f"><label>现在还剩多少克（留空＝满）</label><input id="c_st" type="number" inputmode="decimal" value="'+fv(d.stockGram)+'"></div>'
+  +'<div class="sub" style="margin:-6px 4px 14px">库存从保存这天开始，每天自动扣「每天吃多少克」。改这个数字就重新算。</div>'
+  +(ed?'<div class="danger" id="del">删除商品</div>':'')+'</div>');
+  let m=d.priceMode,pm=d.packPriceMode||'unit',photo=d.photo||'';
+  $('#c_ph',s.el).onchange=e=>{const f=e.target.files[0];if(!f)return;shrink(f,url=>{photo=url;const pv=$('#c_pv',s.el);pv.src=url;pv.style.display=''})};
+  const rmb=$('#c_rm',s.el);if(rmb)rmb.onclick=()=>{photo='';$('#c_pv',s.el).style.display='none'};
+  s.qa('.seg [data-m]').forEach(x=>x.onclick=()=>{
+    m=x.dataset.m;s.qa('.seg [data-m]').forEach(y=>y.classList.toggle('on',y===x));
+    const pk=m==='pack';
+    s.q('#gB').style.display=pk?'none':'';s.q('#pWrap').style.display=pk?'':'none';
+    s.q('#box_pc').style.display=pk?'':'none';s.q('#c_pgl').textContent=pk?'每包多少克':'一共多少克';
+  });
+  s.qa('.seg [data-pm]').forEach(x=>x.onclick=()=>{
+    pm=x.dataset.pm;s.qa('.seg [data-pm]').forEach(y=>y.classList.toggle('on',y===x));
+    const u=pm==='unit';
+    s.q('#ppl').textContent=u?'每包多少钱（元）':'一共花了多少钱（元）';
+    s.q('#c_pp').placeholder=u?'15':'100';
+  });
+  $('#ok',s.el).onclick=()=>{
+    const isPack=m==='pack';
+    const ns=s.q('#c_st').value.trim();
+    const os=ed?ed.stockGram:'';
+    const o={
+      id:ed?ed.id:uid('c'),
+      name:s.q('#c_name').value.trim()||'未命名',
+      photo:photo,
+      priceMode:m,
+      packPriceMode:pm,
+      priceTotal:(isPack?(pm==='total'?s.q('#c_pp').value.trim():''):s.q('#c_u').value.trim()),
+      pricePerPack:(isPack&&pm==='unit')?s.q('#c_pp').value.trim():'',
+      packGram:s.q('#c_pg').value.trim(),
+      packCount:isPack?(s.q('#c_pc').value.trim()||1):1,
+      dailyGram:s.q('#c_d').value.trim(),
+      stockGram:ns,
+      stockDate:(ns!==os?TODAY():((ed&&ed.stockDate)||TODAY()))
+    };
+    if(ed)DB.cost[DB.cost.findIndex(x=>x.id===ed.id)]=o;else DB.cost.push(o);
+    LS.s('cost',DB.cost);s.close();renderCost();toast(ed?'已保存':'已添加');
+  };
+  const dl=$('#del',s.el);
+  if(dl)dl.onclick=()=>{
+    const undo=delUndo('cost',renderCost);
+    DB.cost=DB.cost.filter(x=>x.id!==ed.id);LS.s('cost',DB.cost);s.close();renderCost();
+    toast('已删除',2200,undo);
+  };
+}
+
+/* ===== 体重 ===== */
+function bmiOf(kg){const h=num(DB.profile.height)/100;return h>0?kg/(h*h):0}
+function bmiL(v){if(!v)return'';if(v<18.5)return'偏瘦';if(v<24)return'正常';if(v<28)return'偏胖';return'肥胖'}
+function wkFb(){
+  const ws=DB.weights.slice().sort((a,b)=>a.date<b.date?-1:1);if(ws.length<2)return null;
+  const last=ws[ws.length-1],goal=addDays(last.date,-7);let prev=null;
+  for(let i=ws.length-2;i>=0;i--){if(ws[i].date<=goal){prev=ws[i];break}}
+  if(!prev)prev=ws[0];if(!prev||prev.date===last.date)return null;
+  const days=Math.max(1,Math.round((pISO(last.date)-pISO(prev.date))/86400000));
+  const dKg=prev.kg-last.kg,wk=prev.kg>0?(dKg/prev.kg)/days*7:0;
+  let kind,title,msg,sug=null;
+  if(wk>=0.01){kind='warn';title='降得太快了';msg='每周降 '+(wk*100).toFixed(1)+'%，超过 1%。按规则：保持当前目标，别急着减。'}
+  else if(wk>=0.005){kind='ok';title='节奏刚好';msg='每周降 '+(wk*100).toFixed(1)+'%，落在 0.5%–1%。按规则：保持不变，继续。'}
+  else{kind='slow';title='掉得有点慢';const nc=Math.max(80,num(DB.target.carb)-20);sug=nc;msg=(dKg>0?'每周只降 ':'体重没降，')+(Math.abs(wk)*100).toFixed(1)+'%，不足 0.5%。按规则：碳水 −20g → <b>'+nc+'g</b>（蛋白脂肪不动）。'+(num(DB.target.carb)<=80?' 已在下限 80g，不再减了。':'')}
+  return{last:last,prev:prev,days:days,dKg:dKg,wk:wk,kind:kind,title:title,msg:msg,sug:sug};
+}
+function trend(cv,pts){
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth||300,h=150;
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);cv.style.height=h+'px';
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+  const dark=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const cLine=dark?'#8B9BD4':'#5D6BA8',cTxt=dark?'#8B8B99':'#8A8A99';
+  if(pts.length<2){g.clearRect(0,0,w,h);g.fillStyle=cTxt;g.font='13px -apple-system,sans-serif';g.textAlign='center';g.fillText('记两次以上就能看到趋势',w/2,h/2);return}
+  const pad=24,iw=w-pad*2,ih=h-pad*2,ks=pts.map(p=>p.kg);
+  let mn=Math.min.apply(null,ks),mx=Math.max.apply(null,ks);
+  if(mx-mn<1){const m=(mx+mn)/2;mn=m-.5;mx=m+.5}
+  const X=i=>pad+iw*i/(pts.length-1),Y=v=>pad+ih*(1-(v-mn)/(mx-mn));
+  const t0=performance.now(),DUR=800;
+  (function frame(now){
+    const raw=Math.min(1,(now-t0)/DUR),p=1-Math.pow(1-raw,3);
+    g.clearRect(0,0,w,h);
+    g.save();g.beginPath();g.rect(0,0,pad+iw*p+10,h);g.clip();
+    const lg=g.createLinearGradient(0,pad,0,pad+ih);
+    lg.addColorStop(0,dark?'rgba(139,155,212,.22)':'rgba(93,107,168,.2)');
+    lg.addColorStop(1,'rgba(93,107,168,0)');
+    g.beginPath();g.moveTo(X(0),Y(pts[0].kg));pts.forEach((pt,i)=>{if(i)g.lineTo(X(i),Y(pt.kg))});
+    g.lineTo(X(pts.length-1),pad+ih);g.lineTo(X(0),pad+ih);g.closePath();g.fillStyle=lg;g.fill();
+    g.beginPath();g.moveTo(X(0),Y(pts[0].kg));pts.forEach((pt,i)=>{if(i)g.lineTo(X(i),Y(pt.kg))});
+    g.strokeStyle=cLine;g.lineWidth=2.2;g.lineJoin='round';g.lineCap='round';g.stroke();
+    pts.forEach((pt,i)=>{
+      if(pts.length>14&&i!==pts.length-1&&i%2)return;
+      const L=i===pts.length-1;
+      g.beginPath();g.arc(X(i),Y(pt.kg),L?4.5:2.8,0,Math.PI*2);
+      g.fillStyle=L?cLine:(dark?'#1F1F27':'#fff');g.fill();
+      if(!L){g.strokeStyle=cLine;g.lineWidth=2;g.stroke()}
+    });
+    g.restore();
+    g.fillStyle=cTxt;g.font='11px -apple-system,sans-serif';g.textAlign='left';
+    g.fillText(mx.toFixed(1),pad-6,pad-8);g.fillText(mn.toFixed(1),pad-6,pad+ih+14);
+    if(raw<1)requestAnimationFrame(frame);
+  })(t0);
+}
+function renderWeight(){
+  const b=$('#weightApp');if(!b)return;if(window.__row){window.__row.style.transform='';window.__row=null}
+  const ws=DB.weights.slice().sort((a,c)=>a.date<c.date?-1:1),last=ws[ws.length-1],fb=wkFb();
+  const cur=last?num(last.kg):0,bmi=cur?bmiOf(cur):0;
+  let h='<div class="card"><div class="sub" style="margin:0 0 4px">当前体重</div><div style="display:flex;justify-content:space-between;align-items:flex-end"><div class="big">'+(cur?cur.toFixed(1):'—')+'<span class="goal"> kg</span></div><div class="sub" style="margin:0">'+(last?last.date:'还没记过')+'</div></div>';
+  if(bmi)h+='<div class="sub" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--sep)">BMI <b>'+bmi.toFixed(1)+'</b> ｜ '+bmiL(bmi)+'<span style="color:var(--ter)"> （身高 '+num(DB.profile.height)+' cm）</span></div>';
+  h+='</div>';
+  if(fb){
+    const cc=fb.kind==='ok'?'var(--green)':'var(--red)';
+    const bg=fb.kind==='ok'?'rgba(143,176,166,.14)':fb.kind==='warn'?'rgba(197,99,122,.1)':'rgba(233,166,182,.18)';
+    h+='<div class="sec">7 天反馈</div><div class="item" style="background:'+bg+'">'
+    +'<div class="ih"><div class="nm" style="color:'+cc+'">'+fb.title+'</div><div class="rt" style="color:'+cc+'">'+(fb.dKg>=0?'−':'+')+Math.abs(fb.dKg).toFixed(1)+' kg</div></div>'
+    +'<div class="sub">对比 '+fb.prev.date+'（'+fb.prev.kg+' kg）· 间隔 '+fb.days+' 天<br>'+fb.msg+'</div>'
+    +'<div class="sub">当前目标：'+DB.target.kcal+' kcal ｜ 碳水 '+DB.target.carb+' g</div>'
+    +(fb.sug!=null&&fb.sug<num(DB.target.carb)?'<div class="addbtn" id="w_ap" style="margin-top:14px;background:color-mix(in srgb,var(--label) 5%,transparent);padding:12px">应用：碳水改为 '+fb.sug+' g</div>':'')
+    +'</div>';
+  }
+  h+='<div class="sec">趋势</div><div class="card"><canvas id="w_cv" style="width:100%;display:block"></canvas></div>';
+  h+='<div class="sec">记录（'+ws.length+'）</div><div class="list">'
+  +(ws.length?ws.slice().reverse().map(w=>'<div class="swipe"><div class="db" data-del="'+w.id+'">删除</div><div class="srow" data-r="'+w.id+'"><div class="l"><div class="n">'+num(w.kg).toFixed(1)+' kg</div><div class="s">'+w.date+(w.note?' · '+esc(w.note):'')+'</div></div><div class="r"><div class="g">BMI '+(bmiOf(num(w.kg))?bmiOf(num(w.kg)).toFixed(1):'—')+'</div></div></div></div>').join(''):'<div class="empty">还没有记录<br>点下面「＋ 记体重」</div>')
+  +'</div><div class="addbtn" id="wadd">＋ 记体重</div>';
+  b.innerHTML=h;
+  const cv=$('#w_cv',b);
+  if(cv){const pts=ws.slice(-30).map(w=>({date:w.date,kg:num(w.kg)})).filter(p=>p.kg>0);requestAnimationFrame(()=>trend(cv,pts))}
+  const ap=$('#w_ap',b);
+  if(ap)ap.onclick=()=>{
+    DB.target.carb=fb.sug;DB.target.kcal=Math.max(0,num(DB.target.kcal)-80);
+    LS.s('target',DB.target);renderWeight();toast('碳水已改为 '+fb.sug+' g');
+  };
+  $('#wadd',b).onclick=()=>weightEditor(null);
+  $$('[data-del]',b).forEach(e=>e.onclick=()=>{
+    const undo=delUndo('weights',renderWeight);
+    DB.weights=DB.weights.filter(x=>x.id!==e.dataset.del);LS.s('weights',DB.weights);renderWeight();
+    toast('已删除',2200,undo);
+  });
+  $$('.srow',b).forEach(e=>{swipe(e);e.onclick=()=>{if(!window.__row)weightEditor(e.dataset.r)}});
+  stagger();
+}
+function weightEditor(id){
+  const ed=id?DB.weights.find(x=>x.id===id):null;
+  const so=DB.weights.slice().sort((a,c)=>a.date<c.date?-1:1),last=so[so.length-1];
+  const d=ed||{date:TODAY(),kg:'',note:''};
+  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">'+(ed?'编辑体重':'记体重')+'</span><span class="s" id="ok">保存</span></div><div class="sb">'
+  +'<div class="f"><label>日期</label><input id="w_dt" type="date" value="'+d.date+'" max="'+TODAY()+'"></div>'
+  +'<div class="f"><label>体重 kg</label><input id="w_kg" type="number" inputmode="decimal" step="0.1" placeholder="'+(last?num(last.kg):'55.0')+'" value="'+(d.kg===''?'':esc(d.kg))+'"></div>'
+  +'<div class="f"><label>备注（可留空）</label><input id="w_nt" placeholder="早上空腹" value="'+esc(d.note||'')+'"></div>'
+  +(ed?'<div class="danger" id="del">删除这条</div>':'')+'</div>');
+  $('#ok',s.el).onclick=()=>{
+    const kg=num(s.q('#w_kg').value);
+    if(kg<=0){s.q('#w_kg').focus();toast('填一下体重');return}
+    const o={id:ed?ed.id:uid('w'),date:s.q('#w_dt').value||TODAY(),kg:kg,note:s.q('#w_nt').value.trim()};
+    if(ed)DB.weights[DB.weights.findIndex(x=>x.id===ed.id)]=o;else DB.weights.push(o);
+    LS.s('weights',DB.weights);s.close();renderWeight();toast('已记录');
+  };
+  const dl=$('#del',s.el);
+  if(dl)dl.onclick=()=>{
+    const undo=delUndo('weights',renderWeight);
+    DB.weights=DB.weights.filter(x=>x.id!==ed.id);LS.s('weights',DB.weights);s.close();renderWeight();
+    toast('已删除',2200,undo);
+  };
+}
+
+/* ===== 设置 ===== */
+function sugTgt(){
+  const p=DB.profile,ws=DB.weights.slice().sort((a,b)=>a.date<b.date?-1:1);
+  const kg=ws.length?num(ws[ws.length-1].kg):55;
+  const sex=p.sex==='m'?5:-161;
+  const bmr=10*kg+6.25*num(p.height)-5*num(p.age)+sex;
+  const kcal=Math.max(1000,Math.round(bmr+num(p.minutes)*num(p.act)));
+  return{kcal:kcal,protein:Math.round(kcal*.3/4),carb:Math.max(80,Math.round(kcal*.5/4)),fat:Math.round(kcal*.2/9),bmr:Math.round(bmr)};
+}
+function renderSet(){
+  const b=$('#setApp');if(!b)return;const p=DB.profile,t=DB.target;
+  const lastExp=LS.g('lastExport',0);
+  const days=lastExp?Math.floor((Date.now()-lastExp)/86400000):999;
+  const showWarn=days>=7;
+  b.innerHTML=
+   (showWarn?'<div class="warnbar"><span>'+(lastExp?'<b>'+days+' 天</b>没导出数据了':'<b>还没导出过</b>数据')
+     +'。数据只在这台手机上，清一下 Safari 就没。</span><button id="w_ex" style="padding:9px 16px;border-radius:12px;background:var(--card);color:var(--blue);font-weight:600;font-size:13.5px;flex-shrink:0">导出</button></div>':'')
+  +'<div class="card"><div class="row"><div class="f"><label>身高 cm</label><input id="s_h" type="number" inputmode="decimal" value="'+p.height+'"></div><div class="f"><label>年龄</label><input id="s_a" type="number" inputmode="decimal" value="'+p.age+'"></div></div>'
+  +'<div class="row"><div class="f"><label>性别</label><div class="seg"><button data-sex="f" class="'+(p.sex==='m'?'':'on')+'">女</button><button data-sex="m" class="'+(p.sex==='m'?'on':'')+'">男</button></div></div>'
+  +'<div class="f"><label>训练强度</label><div class="seg"><button data-act="5" class="'+(num(p.act)===5?'on':'')+'">新手</button><button data-act="8" class="'+(num(p.act)===8?'on':'')+'">普通</button><button data-act="10" class="'+(num(p.act)===10?'on':'')+'">强</button></div></div></div>'
+  +'<div class="f"><label>每天训练多少分钟（不运动填 0）</label><input id="s_m" type="number" inputmode="decimal" value="'+num(p.minutes)+'"></div>'
+  +'<div id="pv" class="sub"></div>'
+  +'<div class="addbtn" id="s_ap" style="margin-top:14px">按 5:3:2 算出并应用</div></div>'
+  +'<div class="sec">当前目标</div><div class="item" id="s_t"><div class="ih"><div class="nm">每日目标</div><div class="rt">改 ›</div></div><div class="sub">热量 <b>'+t.kcal+'</b> kcal<br>蛋白 <b>'+t.protein+'</b> g ｜ 碳水 <b>'+t.carb+'</b> g ｜ 脂肪 <b>'+t.fat+'</b> g</div></div>'
+  +'<div class="sec">数据</div><div class="list"><div class="srow" id="s_ex"><div class="l"><div class="n">导出数据</div><div class="s">生成一段文本，复制保存到备忘录</div></div><div class="r"><div class="g">›</div></div></div><div class="srow" id="s_im"><div class="l"><div class="n">导入数据</div><div class="s">粘贴之前导出的文本</div></div><div class="r"><div class="g">›</div></div></div></div>'
+  +'<div class="danger" id="s_cl">清空全部数据</div>'
+  +'<div class="sub" style="text-align:center;color:var(--ter);margin:20px 0 0">数据只存在这台手机上<br>清除 Safari 数据会丢失，记得偶尔导出</div>';
+  const pv=()=>{
+    const bak=DB.profile;
+    DB.profile={height:num($('#s_h').value)||p.height,age:num($('#s_a').value)||p.age,sex:p.sex,minutes:num($('#s_m').value),act:num(p.act)};
+    const r=sugTgt();DB.profile=bak;
+    $('#pv').innerHTML='基础代谢约 <b>'+r.bmr+'</b> kcal → 建议 <b>'+r.kcal+'</b> kcal ｜ 碳水 <b>'+r.carb+'</b> g · 蛋白 <b>'+r.protein+'</b> g · 脂肪 <b>'+r.fat+'</b> g';
+  };
+  ['s_h','s_a','s_m'].forEach(id=>$('#'+id).oninput=pv);
+  $$('[data-sex]',b).forEach(x=>x.onclick=()=>{p.sex=x.dataset.sex;LS.s('profile',p);renderSet()});
+  $$('[data-act]',b).forEach(x=>x.onclick=()=>{p.act=num(x.dataset.act);LS.s('profile',p);renderSet()});
+  $('#s_ap',b).onclick=()=>{
+    p.height=num($('#s_h').value)||p.height;p.age=num($('#s_a').value)||p.age;p.minutes=num($('#s_m').value);
+    LS.s('profile',p);
+    const r=sugTgt();
+    DB.target={kcal:r.kcal,protein:r.protein,carb:r.carb,fat:r.fat};LS.s('target',DB.target);
+    renderSet();toast('已按 5:3:2 更新目标');
+  };
+  $('#s_t',b).onclick=()=>tgtEditor();
+  $('#s_ex',b).onclick=expData;
+  const sx=$('#w_ex',b);if(sx)sx.onclick=expData;
+  $('#s_im',b).onclick=impData;
+  $('#s_cl',b).onclick=()=>{
+    const d=dlg('<h3>清空全部数据？</h3><div class="sub" style="margin:-6px 0 0">饮食记录、食物库、花费、体重、目标，全都没了，且无法恢复。</div><div class="dbtns"><button data-close>取消</button><button class="p" id="ok" style="background:var(--red);color:#fff">清空</button></div>');
+    $('#ok',d.el).onclick=()=>{
+      ['foods','logs','cost','weights','target','profile','lastExport'].forEach(k=>localStorage.removeItem('diet::'+k));
+      d.close();location.reload();
+    };
+  };
+  stagger();pv();
+}
+function expData(){
+  const txt=JSON.stringify({v:1,foods:DB.foods,logs:DB.logs,cost:DB.cost,weights:DB.weights,target:DB.target,profile:DB.profile});
+  const s=sheet('<div class="sh"><button data-close>关闭</button><span class="t">导出数据</span><span class="s" id="cp">复制</span></div><div class="sb"><div class="sub" style="margin:0 0 10px">全选下面这段，复制到备忘录存着。以后换手机或数据丢了，用它导入就能恢复。</div><textarea id="ta" readonly style="width:100%;height:38vh;border-radius:14px;background:var(--card);padding:14px;font-size:12px;color:var(--sec);font-family:ui-monospace,Menlo,monospace;line-height:1.5;resize:none">'+esc(txt)+'</textarea></div>');
+  $('#cp',s.el).onclick=()=>{
+    const ta=$('#ta',s.el);
+    ta.removeAttribute('readonly');ta.focus();ta.select();ta.setSelectionRange(0,999999);
+    try{const ok=document.execCommand('copy');toast(ok?'已复制':'请长按选中后复制')}catch(e){toast('请长按选中后复制')}
+    ta.setAttribute('readonly','readonly');
+    LS.s('lastExport',Date.now());
+  };
+}
+function impData(){
+  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">导入数据</span><span class="s" id="ok">导入</span></div><div class="sb"><div class="sub" style="margin:0 0 10px">把之前导出的那段文本粘进来。注意：会覆盖现在所有数据。</div><textarea id="ta" placeholder="在这里粘贴…" style="width:100%;height:34vh;border-radius:14px;background:var(--card);padding:14px;font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.5;resize:none"></textarea></div>');
+  $('#ok',s.el).onclick=()=>{
+    const raw=$('#ta',s.el).value.trim();if(!raw){toast('还没粘贴');return}
+    let o;try{o=JSON.parse(raw)}catch(e){toast('这段文本不对');return}
+    if(!o||typeof o!=='object'){toast('这段文本不对');return}
+    if(Array.isArray(o.foods)){DB.foods=o.foods;LS.s('foods',DB.foods)}
+    if(Array.isArray(o.logs)){DB.logs=o.logs;LS.s('logs',DB.logs)}
+    if(Array.isArray(o.cost)){DB.cost=o.cost;LS.s('cost',DB.cost)}
+    if(Array.isArray(o.weights)){DB.weights=o.weights;LS.s('weights',DB.weights)}
+    if(o.target){DB.target=o.target;LS.s('target',DB.target)}
+    if(o.profile){DB.profile=o.profile;LS.s('profile',DB.profile)}
+    s.close();go('meal');toast('导入完成');
+  };
+}
+
+/* ===== 启动 ===== */
+renderMeal();
