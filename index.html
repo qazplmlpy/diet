@@ -33,8 +33,8 @@ button,input{font:inherit;-webkit-appearance:none;appearance:none;outline:none;b
 .empty{padding:30px 16px;text-align:center;font-size:13px;color:var(--sec);line-height:1.9}
 .list{border-radius:var(--r);overflow:hidden;background:var(--card)}
 .bar{height:8px;border-radius:4px;background:var(--sep);overflow:hidden}
-.bar>i{display:block;height:100%;border-radius:4px;background:var(--blue);transition:width .35s;position:relative;overflow:hidden;animation:barGrow .55s cubic-bezier(.22,1,.36,1)}
-.bar>i::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);animation:sweep .85s .2s cubic-bezier(.22,1,.36,1)}
+.bar>i{display:block;height:100%;border-radius:4px;background:var(--blue);position:relative;overflow:hidden;animation:barGrow .95s cubic-bezier(.22,1,.36,1)}
+.bar>i::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);animation:sweep .95s cubic-bezier(.22,1,.36,1) forwards}
 .bar.s{height:5px;border-radius:3px}.bar.s>i{border-radius:3px}
 .mask{position:fixed;inset:0;z-index:999;background:rgba(48,50,94,.28);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:flex;align-items:flex-end;animation:fade .2s}
 .mask.center{align-items:center;justify-content:center}
@@ -137,7 +137,6 @@ const addDays=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);r
 const pISO=s=>{const a=s.split('-').map(Number);return new Date(a[0],a[1]-1,a[2])};
 const WD='日一二三四五六';
 const LS={g(k,d){try{const v=JSON.parse(localStorage.getItem('diet::'+k));return v==null?d:v}catch(e){return d}},s(k,v){try{localStorage.setItem('diet::'+k,JSON.stringify(v))}catch(e){}}};
-
 const DEF=[{n:'米饭(熟)',k:116,p:2.6,c:25.9,f:0.3},{n:'鸡胸肉',k:133,p:24.6,c:1,f:3},{n:'鸡蛋',k:144,p:13.3,c:2.8,f:8.8},{n:'全麦面包',k:265,p:9,c:49,f:3.2}];
 const DB={foods:LS.g('foods',null),logs:LS.g('logs',[]),cost:LS.g('cost',[]),weights:LS.g('weights',[]),target:LS.g('target',null),profile:LS.g('profile',null)};
 if(!Array.isArray(DB.foods)||!DB.foods.length){DB.foods=DEF.map(f=>Object.assign({id:uid('f'),fav:false},f));LS.s('foods',DB.foods)}
@@ -158,6 +157,22 @@ function dlg(html){const m=document.createElement('div');m.className='mask cente
 function swipe(el){let x0=0,y0=0,dx=0,op=false,lk=null;el.addEventListener('touchstart',e=>{if(window.__row&&window.__row!==el)window.__row.style.transform='';x0=e.touches[0].clientX;y0=e.touches[0].clientY;dx=0;lk=null;el.style.transition='none'},{passive:true});el.addEventListener('touchmove',e=>{const mx=e.touches[0].clientX-x0,my=e.touches[0].clientY-y0;if(lk===null)lk=Math.abs(mx)>Math.abs(my)+3?'x':'y';if(lk!=='x')return;dx=Math.max(-96,Math.min(0,op?mx-80:mx));el.style.transform='translateX('+dx+'px)'},{passive:true});el.addEventListener('touchend',()=>{el.style.transition='';op=dx<-40;el.style.transform=op?'translateX(-80px)':'';window.__row=op?el:(window.__row===el?null:window.__row)})}
 function go(pg){$$('.page').forEach(p=>p.classList.toggle('on',p.id==='pg-'+pg));$$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.pg===pg));({meal:renderMeal,food:renderFood,cost:renderCost,weight:renderWeight,set:renderSet}[pg]||function(){})();scrollTo(0,0)}
 $$('.tab').forEach(b=>b.onclick=()=>go(b.dataset.pg));
+
+let __prevK=0;
+function animateBig(){
+  const el=$('#mealApp .big');if(!el||!el.firstChild)return;
+  const node=el.firstChild,to=parseFloat(node.nodeValue);if(!isFinite(to))return;
+  const from=__prevK;__prevK=to;if(Math.abs(to-from)<1)return;
+  const t0=performance.now(),dur=550;
+  (function step(now){
+    const p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,3);
+    node.nodeValue=String(Math.round(from+(to-from)*e));
+    if(p<1)requestAnimationFrame(step);else node.nodeValue=String(Math.round(to));
+  })(t0);
+}
+function stagger(){
+  $$('.list .swipe,.item,.sum>div').forEach((el,i)=>{el.style.animationDelay=Math.min(i*30,280)+'ms'});
+}
 
 /* ---------- 今日饮食 ---------- */
 let mDate=TODAY();
@@ -183,6 +198,7 @@ function renderMeal(){
   $('#etgt').onclick=tgtEditor;
   $$('[data-del]',b).forEach(e=>e.onclick=()=>{DB.logs=DB.logs.filter(x=>x.id!==e.dataset.del);LS.s('logs',DB.logs);renderMeal();toast('已删除')});
   $$('.srow',b).forEach(e=>{swipe(e);e.onclick=()=>{if(!window.__row)mealEditor(e.dataset.r)}});
+  stagger();animateBig();
 }
 function mealEditor(id){
   const ed=id?DB.logs.find(x=>x.id===id):null,d=ed||{name:'',gram:'',k:'',p:'',c:'',f:''};
@@ -375,6 +391,7 @@ function renderWeight(){
   $('#wadd',b).onclick=()=>weightEditor(null);
   $$('[data-del]',b).forEach(e=>e.onclick=()=>{DB.weights=DB.weights.filter(x=>x.id!==e.dataset.del);LS.s('weights',DB.weights);renderWeight();toast('已删除')});
   $$('.srow',b).forEach(e=>{swipe(e);e.onclick=()=>{if(!window.__row)weightEditor(e.dataset.r)}});
+  stagger();
 }
 function weightEditor(id){
   const ed=id?DB.weights.find(x=>x.id===id):null;
@@ -423,7 +440,7 @@ function renderSet(){
   $('#s_ex',b).onclick=expData;
   $('#s_im',b).onclick=impData;
   $('#s_cl',b).onclick=()=>{const d=dlg('<h3>清空全部数据？</h3><div class="sub" style="margin:-6px 0 0">饮食记录、食物库、花费、体重、目标，全都没了，且无法恢复。</div><div class="dbtns"><button data-close>取消</button><button class="p" id="ok" style="background:var(--red);color:#fff">清空</button></div>');$('#ok',d.el).onclick=()=>{['foods','logs','cost','weights','target','profile'].forEach(k=>localStorage.removeItem('diet::'+k));d.close();location.reload()}};
-  pv();
+  stagger();pv();
 }
 function expData(){
   const txt=JSON.stringify({v:1,foods:DB.foods,logs:DB.logs,cost:DB.cost,weights:DB.weights,target:DB.target,profile:DB.profile});
@@ -431,7 +448,7 @@ function expData(){
   $('#cp',s.el).onclick=()=>{const ta=$('#ta',s.el);ta.removeAttribute('readonly');ta.focus();ta.select();ta.setSelectionRange(0,999999);try{const ok=document.execCommand('copy');toast(ok?'已复制':'请长按选中后复制')}catch(e){toast('请长按选中后复制')}ta.setAttribute('readonly','readonly')};
 }
 function impData(){
-  const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">导入数据</span><span class="s" id="ok">导入</span></div><div class="sb"><div class="sub" style="margin:0 0 10px">把之前导出的那段文本粘进来。注意：会覆盖现在所有数据。</div><textarea id="ta" placeholder="在这里粘贴…" style="width:100%;height:34vh;border-radius:14px;background:var(--card);padding:14px;font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.5;resize:none"></textarea></div>');
+把之前导出的那段文本粘进来。注意：会覆盖现在所有数据。</div><textarea id="ta" placeholder="在这里粘贴…" style="width:100%;height:34vh;border-radius:14px;background:var(--card);padding:14px;font-size:12px;font-family:ui-monospace,Menlo,monospace;line-height:1.5;resize:none"></textarea></div>');
   $('#ok',s.el).onclick=()=>{
     const raw=$('#ta',s.el).value.trim();if(!raw){toast('还没粘贴');return}
     let o;try{o=JSON.parse(raw)}catch(e){toast('这段文本不对');return}
@@ -442,10 +459,10 @@ function impData(){
     if(Array.isArray(o.weights)){DB.weights=o.weights;LS.s('weights',DB.weights)}
     if(o.target){DB.target=o.target;LS.s('target',DB.target)}
     if(o.profile){DB.profile=o.profile;LS.s('profile',DB.profile)}
-        s.close();go('meal');toast('导入完成')};
+    s.close();go('meal');toast('导入完成')};
 }
 
 renderMeal();
 </script>
 </body>
-</html>
+</html>  
