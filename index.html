@@ -37,7 +37,6 @@ button,input{font:inherit;-webkit-appearance:none;appearance:none;outline:none;b
 .rt{font-size:15px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums;flex-shrink:0}
 .sub{font-size:12.5px;color:var(--sec);margin-top:6px;line-height:1.7}
 .sub b{color:var(--label)}
-.num{font-variant-numeric:tabular-nums}
 .addbtn{margin:18px 0 0;padding:15px;text-align:center;background:var(--card);border-radius:var(--r);color:var(--blue);font-weight:600;transition:transform .16s cubic-bezier(.22,1,.36,1)}
 .addbtn:active{transform:scale(.94)}
 .empty{padding:30px 16px;text-align:center;font-size:13px;color:var(--sec);line-height:1.9}
@@ -138,7 +137,6 @@ const DB={foods:LS.g('foods',null),logs:LS.g('logs',[]),cost:LS.g('cost',[]),wei
 if(!Array.isArray(DB.foods)||!DB.foods.length){DB.foods=DEF.map(f=>Object.assign({id:uid('f'),fav:false},f));LS.s('foods',DB.foods)}
 if(!DB.target)DB.target={kcal:1400,protein:105,carb:175,fat:31};
 if(!DB.profile)DB.profile={height:160,age:25,sex:'f',act:8,minutes:0};
-
 function toast(m,ms){ms=ms||1600;const e=document.createElement('div');e.innerHTML='<span class="tk"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19 7.5"/></svg></span>'+esc(m);e.style.cssText='position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:2000;display:flex;align-items:center;gap:9px;background:rgba(48,50,94,.92);color:#fff;font-size:14px;padding:10px 18px 10px 12px;border-radius:22px;max-width:80%;pointer-events:none;animation:riseIn .28s cubic-bezier(.22,1,.36,1)';document.body.appendChild(e);setTimeout(()=>{e.style.transition='opacity .25s';e.style.opacity='0'},ms-250);setTimeout(()=>e.remove(),ms)}
 function sheet(html){const m=document.createElement('div');m.className='mask';m.innerHTML='<div class="sheet">'+html+'</div>';document.body.appendChild(m);const close=()=>m.remove();m.onclick=e=>{if(e.target===m)close()};$$('[data-close]',m).forEach(b=>b.onclick=close);return{el:m,close,q:s=>m.querySelector(s),qa:s=>$$(s,m)}}
 function dlg(html){const m=document.createElement('div');m.className='mask center';m.innerHTML='<div class="dlg">'+html+'</div>';document.body.appendChild(m);const close=()=>m.remove();m.onclick=e=>{if(e.target===m)close()};$$('[data-close]',m).forEach(b=>b.onclick=close);return{el:m,close,q:s=>m.querySelector(s)}}
@@ -148,7 +146,6 @@ $$('.tab').forEach(b=>b.onclick=()=>go(b.dataset.pg));
 let __prevK=0;
 function animateBig(){const el=$('#mealApp .big');if(!el||!el.firstChild)return;const node=el.firstChild,to=parseFloat(node.nodeValue);if(!isFinite(to))return;const from=__prevK;__prevK=to;if(Math.abs(to-from)<1)return;const t0=performance.now(),dur=550;(function step(now){const p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,3);node.nodeValue=String(Math.round(from+(to-from)*e));if(p<1)requestAnimationFrame(step);else node.nodeValue=String(Math.round(to))})(t0)}
 function stagger(){$$('.list .swipe,.item,.sum>div').forEach((el,i)=>{el.style.animationDelay=Math.min(i*30,280)+'ms'})}
-
 let mDate=TODAY();
 const of=d=>DB.logs.filter(l=>l.date===d);
 function tot(d){const t={k:0,p:0,c:0,f:0};of(d).forEach(l=>{const r=num(l.gram)/100;t.k+=num(l.k)*r;t.p+=num(l.p)*r;t.c+=num(l.c)*r;t.f+=num(l.f)*r});return t}
@@ -204,7 +201,6 @@ function tgtEditor(){
   +'<div class="dbtns"><button data-close>取消</button><button class="p" id="ok">保存</button></div>');
   $('#ok',s.el).onclick=()=>{DB.target={kcal:num(s.q('#t_k').value)||1400,protein:num(s.q('#t_p').value)||105,carb:num(s.q('#t_c').value)||175,fat:num(s.q('#t_f').value)||31};LS.s('target',DB.target);s.close();renderMeal();toast('目标已更新')};
 }
-
 let fq='';
 function renderFood(){
   const b=$('#foodApp');if(!b)return;if(window.__row){window.__row.style.transform='';window.__row=null}
@@ -238,8 +234,14 @@ function foodEditor(id){
   $('#ok',s.el).onclick=()=>{const name=s.q('#e_n').value.trim();if(!name){s.q('#e_n').focus();toast('填个名称');return}const o={id:ed?ed.id:uid('f'),n:name,k:num(s.q('#e_k').value),p:num(s.q('#e_p').value),c:num(s.q('#e_c').value),f:num(s.q('#e_f').value),fav:fav};if(ed)DB.foods[DB.foods.findIndex(x=>x.id===ed.id)]=o;else DB.foods.push(o);LS.s('foods',DB.foods);s.close();renderFood();toast(ed?'已保存':'已添加')};
   const dl=$('#del',s.el);if(dl)dl.onclick=()=>{DB.foods=DB.foods.filter(x=>x.id!==ed.id);LS.s('foods',DB.foods);s.close();renderFood();toast('已删除')};
 }
-
-function calc(it){const pg=num(it.packGram),pcn=num(it.packCount)||1,daily=num(it.dailyGram),total=pg*pcn;const unit=it.priceMode==='pack'?(pg>0?num(it.pricePerPack)/pg:0):num(it.pricePer100g)/100;const perDay=unit*daily,stock=(it.stockGram===''||it.stockGram==null)?total:num(it.stockGram);return{pg:pg,pcn:pcn,daily:daily,total:total,unit100:unit*100,perDay:perDay,perMonth:perDay*30,stock:stock,daysTotal:daily>0?total/daily:0,daysLeft:daily>0?stock/daily:0}}
+function calc(it){
+  const pg=num(it.packGram),pcn=num(it.packCount)||1,daily=num(it.dailyGram),total=pg*pcn;
+  const unit=it.priceMode==='pack'?(pg>0?num(it.pricePerPack)/pg:0):(total>0?num(it.priceTotal)/total:0);
+  const stock=(it.stockGram===''||it.stockGram==null)?total:num(it.stockGram);
+  const batch=it.priceMode==='pack'?num(it.pricePerPack)*pcn:num(it.priceTotal);
+  const perDay=unit*daily;
+  return{pg:pg,pcn:pcn,daily:daily,total:total,batch:batch,perDay:perDay,perMonth:perDay*30,stock:stock,daysTotal:daily>0?total/daily:0,daysLeft:daily>0?stock/daily:0};
+}
 function shrink(file,cb){const fr=new FileReader();fr.onload=function(){const im=new Image();im.onload=function(){const M=320;let w=im.width,h=im.height;if(w>h){if(w>M){h=Math.round(h*M/w);w=M}}else{if(h>M){w=Math.round(w*M/h);h=M}}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);cb(cv.toDataURL('image/jpeg',.72))};im.src=fr.result};fr.readAsDataURL(file)}
 function renderCost(){
   const b=$('#costApp');if(!b)return;
@@ -250,7 +252,7 @@ function renderCost(){
   if(low.length){h+='<div class="sec">库存倒计时</div>';low.forEach(r=>{h+='<div class="item"><div class="ih"><div class="nm">'+esc(r.name)+'</div><div class="rt" style="color:var(--red)">剩 '+r.daysLeft.toFixed(0)+' 天</div></div><div class="sub">还剩 <b>'+r.stock.toFixed(0)+'</b> g ｜ 每天 '+r.daily+' g</div><div class="bar s" style="margin-top:10px"><i style="width:'+Math.max(3,Math.min(100,r.daysLeft/30*100))+'%;background:var(--red)"></i></div></div>'})}
   h+='<div class="sec">商品（'+DB.cost.length+'）</div>';
   if(!rows.length){h+='<div class="list"><div class="empty">还没有商品<br>点下面「＋ 添加商品」</div></div>'}
-  else{h+='<div class="list">'+rows.map(r=>{const m=r.priceMode==='pack'?'¥'+num(r.pricePerPack)+' / 包 · 每包 '+r.pg+'g':'¥'+num(r.pricePer100g)+' / 100g';const im=r.photo?'<img src="'+r.photo+'" style="width:54px;height:54px;border-radius:14px;object-fit:cover;flex-shrink:0;background:var(--sep)">':'';return '<div class="srow" data-c="'+r.id+'" style="align-items:flex-start;gap:12px">'+im+'<div class="l"><div class="n">'+esc(r.name)+'</div><div class="s">'+m+' ｜ 共 <b>¥'+(r.unit100*r.total/100).toFixed(2)+'</b><br>'+r.pg+'g × '+r.pcn+' 包 = '+r.total+'g ｜ 每天 '+r.daily+'g<br>整批能吃 <b>'+r.daysTotal.toFixed(0)+'</b> 天 ｜ 每月 <b>¥'+r.perMonth.toFixed(0)+'</b></div></div><div class="r"><div class="k">¥'+r.perDay.toFixed(2)+'</div><div class="g">/天</div></div></div>'}).join('')+'</div>'}
+  else{h+='<div class="list">'+rows.map(r=>{const im=r.photo?'<img src="'+r.photo+'" style="width:54px;height:54px;border-radius:14px;object-fit:cover;flex-shrink:0;background:var(--sep)">':'';return '<div class="srow" data-c="'+r.id+'" style="align-items:flex-start;gap:12px">'+im+'<div class="l"><div class="n">'+esc(r.name)+'</div><div class="s">这批 '+r.total+'g ｜ 花了 <b>¥'+r.batch.toFixed(2)+'</b><br>每天 '+r.daily+'g ｜ 能吃 <b>'+r.daysTotal.toFixed(0)+'</b> 天<br>每月 <b>¥'+r.perMonth.toFixed(0)+'</b></div></div><div class="r"><div class="k">¥'+r.perDay.toFixed(2)+'</div><div class="g">/天</div></div></div>'}).join('')+'</div>'}
   h+='<div class="addbtn" id="cadd">＋ 添加商品</div>';
   b.innerHTML=h;
   $('#cadd',b).onclick=()=>costEditor(null);
@@ -259,7 +261,7 @@ function renderCost(){
 }
 function costEditor(id){
   const ed=id?DB.cost.find(x=>x.id===id):null;
-  const d=ed||{name:'',priceMode:'gram',pricePer100g:'',pricePerPack:'',packGram:'',packCount:1,dailyGram:'',stockGram:'',photo:''};
+  const d=ed||{name:'',priceMode:'gram',priceTotal:'',pricePerPack:'',packGram:'',packCount:1,dailyGram:'',stockGram:'',photo:''};
   const fv=v=>(v==null||v==='')?'':v,isP=d.priceMode==='pack';
   const s=sheet('<div class="sh"><button data-close>取消</button><span class="t">'+(ed?'编辑商品':'添加商品')+'</span><span class="s" id="ok">保存</span></div><div class="sb">'
   +'<div class="f"><label>名称</label><input id="c_name" placeholder="散装面包" value="'+esc(d.name)+'"></div>'
@@ -268,21 +270,20 @@ function costEditor(id){
   +'<label style="padding:11px 18px;background:var(--card);border-radius:12px;font-size:14px;color:var(--blue);font-weight:600">选照片<input id="c_ph" type="file" accept="image/*" style="display:none"></label>'
   +(d.photo?'<button id="c_rm" style="font-size:14px;color:var(--red);padding:10px 4px">移除</button>':'')
   +'</div></div>'
-  +'<div class="f"><label>计价方式</label><div class="seg"><button data-m="gram" class="'+(isP?'':'on')+'">按克</button><button data-m="pack" class="'+(isP?'on':'')+'">按包</button></div></div>'
-  +'<div class="f" id="gB"'+(isP?' style="display:none"':'')+'><label>价格（元 / 100g）</label><input id="c_u" type="number" inputmode="decimal" placeholder="12.5" value="'+fv(d.pricePer100g)+'"></div>'
-  +'<div class="f" id="pB"'+(isP?'':' style="display:none"')+'><label>价格（元 / 包）</label><input id="c_pp" type="number" inputmode="decimal" placeholder="15" value="'+fv(d.pricePerPack)+'"></div>'
-  +'<div class="row"><div class="f"><label>每包多少克</label><input id="c_pg" type="number" inputmode="decimal" placeholder="200" value="'+fv(d.packGram)+'"></div><div class="f"><label>分成几包</label><input id="c_pc" type="number" inputmode="decimal" placeholder="4" value="'+fv(d.packCount)+'"></div></div>'
+  +'<div class="f"><label>怎么算钱</label><div class="seg"><button data-m="gram" class="'+(isP?'':'on')+'">整批总价</button><button data-m="pack" class="'+(isP?'on':'')+'">按包价</button></div></div>'
+  +'<div class="f" id="gB"'+(isP?' style="display:none"':'')+'><label>这批一共花了多少钱（元）</label><input id="c_u" type="number" inputmode="decimal" placeholder="100" value="'+fv(d.priceTotal)+'"></div>'
+  +'<div class="f" id="pB"'+(isP?'':' style="display:none"')+'><label>每包多少钱（元）</label><input id="c_pp" type="number" inputmode="decimal" placeholder="15" value="'+fv(d.pricePerPack)+'"></div>'
+  +'<div class="row"><div class="f"><label id="c_pgl">这批一共多少克</label><input id="c_pg" type="number" inputmode="decimal" placeholder="800" value="'+fv(d.packGram)+'"></div><div class="f" id="box_pc" style="'+(isP?'':'display:none')+'"><label>共几包</label><input id="c_pc" type="number" inputmode="decimal" placeholder="2" value="'+fv(d.packCount)+'"></div></div>'
   +'<div class="f"><label>每天吃多少克</label><input id="c_d" type="number" inputmode="decimal" placeholder="50" value="'+fv(d.dailyGram)+'"></div>'
   +'<div class="f"><label>现在还剩多少克（留空＝满）</label><input id="c_st" type="number" inputmode="decimal" value="'+fv(d.stockGram)+'"></div>'
   +(ed?'<div class="danger" id="del">删除商品</div>':'')+'</div>');
   let m=d.priceMode,photo=d.photo||'';
   $('#c_ph',s.el).onchange=e=>{const f=e.target.files[0];if(!f)return;shrink(f,url=>{photo=url;const pv=$('#c_pv',s.el);pv.src=url;pv.style.display=''})};
   const rmb=$('#c_rm',s.el);if(rmb)rmb.onclick=()=>{photo='';$('#c_pv',s.el).style.display='none'};
-  s.qa('.seg button').forEach(x=>x.onclick=()=>{m=x.dataset.m;s.qa('.seg button').forEach(y=>y.classList.toggle('on',y===x));s.q('#gB').style.display=m==='pack'?'none':'';s.q('#pB').style.display=m==='pack'?'':'none'});
-  $('#ok',s.el).onclick=()=>{const o={id:ed?ed.id:uid('c'),name:s.q('#c_name').value.trim()||'未命名',photo:photo,priceMode:m,pricePer100g:s.q('#c_u').value.trim(),pricePerPack:s.q('#c_pp').value.trim(),packGram:s.q('#c_pg').value.trim(),packCount:s.q('#c_pc').value.trim()||1,dailyGram:s.q('#c_d').value.trim(),stockGram:s.q('#c_st').value.trim()};if(ed)DB.cost[DB.cost.findIndex(x=>x.id===ed.id)]=o;else DB.cost.push(o);LS.s('cost',DB.cost);s.close();renderCost();toast(ed?'已保存':'已添加')};
+  s.qa('.seg button').forEach(x=>x.onclick=()=>{m=x.dataset.m;s.qa('.seg button').forEach(y=>y.classList.toggle('on',y===x));const pk=m==='pack';s.q('#gB').style.display=pk?'none':'';s.q('#pB').style.display=pk?'':'none';s.q('#box_pc').style.display=pk?'':'none';s.q('#c_pgl').textContent=pk?'每包多少克':'这批一共多少克'});
+  $('#ok',s.el).onclick=()=>{const o={id:ed?ed.id:uid('c'),name:s.q('#c_name').value.trim()||'未命名',photo:photo,priceMode:m,priceTotal:s.q('#c_u').value.trim(),pricePerPack:s.q('#c_pp').value.trim(),packGram:s.q('#c_pg').value.trim(),packCount:m==='pack'?(s.q('#c_pc').value.trim()||1):1,dailyGram:s.q('#c_d').value.trim(),stockGram:s.q('#c_st').value.trim()};if(ed)DB.cost[DB.cost.findIndex(x=>x.id===ed.id)]=o;else DB.cost.push(o);LS.s('cost',DB.cost);s.close();renderCost();toast(ed?'已保存':'已添加')};
   const dl=$('#del',s.el);if(dl)dl.onclick=()=>{DB.cost=DB.cost.filter(x=>x.id!==ed.id);LS.s('cost',DB.cost);s.close();renderCost();toast('已删除')};
 }
-
 function bmiOf(kg){const h=num(DB.profile.height)/100;return h>0?kg/(h*h):0}
 function bmiL(v){if(!v)return'';if(v<18.5)return'偏瘦';if(v<24)return'正常';if(v<28)return'偏胖';return'肥胖'}
 function wkFb(){
@@ -354,7 +355,6 @@ function weightEditor(id){
   $('#ok',s.el).onclick=()=>{const kg=num(s.q('#w_kg').value);if(kg<=0){s.q('#w_kg').focus();toast('填一下体重');return}const o={id:ed?ed.id:uid('w'),date:s.q('#w_dt').value||TODAY(),kg:kg,note:s.q('#w_nt').value.trim()};if(ed)DB.weights[DB.weights.findIndex(x=>x.id===ed.id)]=o;else DB.weights.push(o);LS.s('weights',DB.weights);s.close();renderWeight();toast('已记录')};
   const dl=$('#del',s.el);if(dl)dl.onclick=()=>{DB.weights=DB.weights.filter(x=>x.id!==ed.id);LS.s('weights',DB.weights);s.close();renderWeight();toast('已删除')};
 }
-li
 function sugTgt(){
   const p=DB.profile,ws=DB.weights.slice().sort((a,b)=>a.date<b.date?-1:1);
   const kg=ws.length?num(ws[ws.length-1].kg):55;
