@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>图标</title>
+<style>
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F2F1F5;font:15px/1.7 -apple-system,"PingFang SC",sans-serif;color:#30325E;padding:24px;box-sizing:border-box;text-align:center}
+#pic{width:230px;height:230px;border-radius:52px;display:block;box-shadow:0 14px 44px rgba(48,50,94,.18);background:#fff}
+.tip{color:#8A8A99;font-size:13.5px;margin-top:26px;max-width:280px}
+.tip b{color:#30325E}
+a{display:inline-block;margin-top:22px;padding:13px 30px;background:#5D6BA8;color:#fff;border-radius:14px;text-decoration:none;font-weight:600;font-size:15px}
+</style>
+</head>
+<body>
+<img id="pic" alt="icon">
+<div class="tip"><b>长按上面的图标</b><br>选「存储到照片」</div>
+<a id="dl">长按没反应？点这里</a>
+<script>
+var S=1024,c=S/2,cv=document.createElement('canvas'),g;
+cv.width=cv.height=S;g=cv.getContext('2d');
+var bg=g.createLinearGradient(0,0,S,S);
+bg.addColorStop(0,'#FFFFFF');bg.addColorStop(.58,'#FFFFFF');bg.addColorStop(1,'#FBEDF2');
+g.fillStyle=bg;g.fillRect(0,0,S,S);
+var h1=g.createRadialGradient(S*.26,S*.20,0,S*.26,S*.20,S*.74);
+h1.addColorStop(0,'rgba(245,205,214,.36)');h1.addColorStop(1,'rgba(245,205,214,0)');
+g.fillStyle=h1;g.fillRect(0,0,S,S);
+var RIM=612,RW=290;
+g.save();
+g.beginPath();g.moveTo(c-RW,RIM);g.arc(c,RIM,RW,0,Math.PI,false);g.closePath();
+var bw=g.createLinearGradient(0,RIM,0,RIM+RW);
+bw.addColorStop(0,'#F0F0F3');bw.addColorStop(.45,'#E5E5EA');bw.addColorStop(1,'#D5D5DC');
+g.fillStyle=bw;g.shadowColor='rgba(48,50,94,.10)';g.shadowBlur=46;g.shadowOffsetY=18;g.fill();
+g.restore();
+g.beginPath();g.moveTo(c-RW+20,RIM+3);g.arc(c,RIM,RW-20,0,Math.PI,false);g.lineTo(c+RW-20,RIM+3);g.closePath();
+var inn=g.createLinearGradient(0,RIM,0,RIM+RW*.55);
+inn.addColorStop(0,'rgba(255,255,255,.92)');inn.addColorStop(.6,'rgba(255,255,255,.30)');inn.addColorStop(1,'rgba(255,255,255,0)');
+g.fillStyle=inn;g.fill();
+g.beginPath();g.moveTo(c-RW,RIM);g.lineTo(c+RW,RIM);
+g.strokeStyle='rgba(255,255,255,.94)';g.lineWidth=7;g.lineCap='round';g.stroke();
+var DY=RIM-44,DR=168;
+var h2=g.createRadialGradient(c,DY,DR*.5,c,DY,DR*2);
+h2.addColorStop(0,'rgba(238,214,164,.60)');h2.addColorStop(.42,'rgba(238,214,164,.20)');h2.addColorStop(1,'rgba(238,214,164,0)');
+g.fillStyle=h2;g.beginPath();g.arc(c,DY,DR*2,0,Math.PI*2);g.fill();
+var dt=g.createRadialGradient(c-DR*.34,DY-DR*.40,DR*.05,c,DY,DR*1.02);
+dt.addColorStop(0,'#FFFEFB');dt.addColorStop(.30,'#FBF2DC');dt.addColorStop(.68,'#F3DEB2');dt.addColorStop(1,'#E7CC94');
+g.save();g.shadowColor='rgba(196,166,112,.28)';g.shadowBlur=40;g.shadowOffsetY=14;
+g.fillStyle=dt;g.beginPath();g.arc(c,DY,DR,0,Math.PI*2);g.fill();g.restore();
+g.beginPath();g.arc(c,DY,DR-1,0,Math.PI*2);
+g.strokeStyle='rgba(231,204,148,.55)';g.lineWidth=2.5;g.stroke();
+g.beginPath();g.arc(c,DY,DR*.76,Math.PI*1.10,Math.PI*1.74);
+g.strokeStyle='rgba(255,255,255,.82)';g.lineWidth=DR*.10;g.lineCap='round';g.stroke();
+document.getElementById('pic').src=cv.toDataURL('image/png');
+cv.toBlob(function(b){document.getElementById('dl').href=URL.createObjectURL(b)});
+</script>
+</body>
+</html>
